@@ -576,6 +576,92 @@ def matrix2qubo(m):
 
 
 
+# ADAPTIVE PENALTY TERMS PDemand,PCost,PStart,PConstr
+## createSATqubo(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDemand,PCost,PStart,PConstr)
+def createSATqubo(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDemand=100,PCost=10,PStart=1,PConstr=1,verbose=True):
+
+    # input check
+    if len(cost)!=len(startcost):
+        print("wrong cost/startup input parameter")
+        return
+    
+    if len(maxgen)!=len(cost):
+        print("wrong cost/supply input parameter")
+        return
+    
+    
+    numberOfTimeSteps=len(demand)
+    numberOfUnits=len(cost)
+
+# setting up sat formulas and mapping ITERATIVE functions
+
+    sat=[]
+    for i in range(len(cost)):
+        sat.append(generateSAT(mindown[i], maxdown[i], minup[i], maxup[i],numberOfTimeSteps))
+
+    formulas, maps=concat3SATManyIterativeWrapper(sat,numberOfTimeSteps)
+    if verbose:
+        print("Number of formulas: ",len(formulas))
+
+# constraint qubo
+    
+    maxVariable=0
+    for f in formulas:
+        for x in f:
+            maxVariable=max(maxVariable,abs(x))
+#    print(maxVariable)
+    convertedFormulas,maxIndex=convertAllClauses(formulas,maxVariable+1)
+#    print(convertedFormulas,maxIndex)
+    m=np.zeros((maxIndex-1,maxIndex-1))
+    for c in convertedFormulas:
+        if len(c)==1: # Replace clause x with x or x
+            add2SATQUBOSortPenalty(m,c[0],c[0],PConstr)
+        elif len(c)==2:
+            add2SATQUBOSortPenalty(m,c[0],c[1],PConstr)
+        elif len(c)==3:
+            addEquationQUBOSortPenalty(m,c[0],c[1],c[2],PConstr)
+#------------
+# Adding Costs
+
+    penaltyCost=PCost
+    penaltyStart=PStart
+
+    for i in range(numberOfUnits):
+        currentMapping=maps[i]
+        currentCost=cost[i]
+        currentstartupCost=startcost[i]
+        
+        for j in currentMapping:
+            m[j,j]=m[j,j]+currentCost*maxgen[i]*penaltyCost    # costs
+            
+        for j in currentMapping[1:]:
+            m[j,j]=m[j,j]+currentstartupCost*penaltyStart       # startcost
+            m[j-1,j]=m[j-1,j]-currentstartupCost*penaltyStart   # startcost
+
+# Create the conditions for demand satisfaction (each power station can create maxgen[i] units)
+# See formula above for (a_i+b_i-d_i)^2
+
+    penaltyDemand=PDemand
+
+    for t in range(numberOfTimeSteps):
+        mappingsThisTimeStep=[]
+        for k in maps:
+            mappingsThisTimeStep.append(k[t])
+
+        for ix in range(len(mappingsThisTimeStep)):
+            x=mappingsThisTimeStep[ix]
+#            m[x,x]=m[x,x]+penaltyDemand*(1-2*demand[t])
+            m[x,x]=m[x,x]+penaltyDemand*(maxgen[ix]**2-2*demand[t]*maxgen[ix])
+            for iy in range(ix+1,len(mappingsThisTimeStep)):
+                y=mappingsThisTimeStep[iy]
+#                m[x,y]=m[x,y]+penaltyDemand*2
+                m[x,y]=m[x,y]+2*penaltyDemand*maxgen[ix]*maxgen[iy]
+
+
+    return m, maps
+
+
+
 
 ## verify solutions by checking the solution vector for minup, mindown, maxup, maxdown constraints
 
