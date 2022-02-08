@@ -1,9 +1,14 @@
 # pygrnd 
-is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH to support the development of Applications for QC in Finance, Insurance and Energy.
+is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH to support the development of Applications for quantum computing in Finance, Insurance and Energy.
 
 ## Install pygrnd
 
 Pre-required: Qiskit Version 'qiskit': '0.32.1'
+
+pip install qiskit
+pip install numpy
+pip install dimod
+pip install greedy
 
 got to /[yourpath]/pygrnd
 
