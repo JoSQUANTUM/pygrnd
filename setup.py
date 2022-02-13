@@ -24,18 +24,4 @@ setuptools.setup(
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],
-    version='0.0.1',
-    license='Apache 2.0',
-    author="JoS QUANTUM GmbH",
-    author_email='contact@jos-quantum.de',
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
-    url='https://github.com/JoSQUANTUM/pygrnd',
-    keywords='quantum finance engine',
-    install_requires=[
-          'numpy',
-          'qiskit',
-          'dimod',
-          'greedy',
-      ],
 )
