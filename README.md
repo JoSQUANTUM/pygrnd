@@ -5,14 +5,14 @@ is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH t
 
 Pre-required: Qiskit Version 'qiskit': '0.32.1'
 
-pip install qiskit
-pip install numpy
-pip install dimod
-pip install greedy
+ pip install qiskit
+ pip install numpy
+ pip install dimod
+ pip install greedy
 
-got to /[yourpath]/pygrnd
+ got to /[yourpath]/pygrnd
 
-pip install .
+ pip install .
 
 ## Tutorials
 
@@ -212,3 +212,61 @@ layer = 10
 Nshots = 10000
 vec, counts, obj, prob, qc, res2 = optimise(xxs, layer,Nshots)
 
+#### Quantum Risk Modelling
+
+Workflow to define a risk model like outlined in (https://arxiv.org/abs/2103.05475).
+Build a Grover operator with a state for which the overall probabilty should be evaluated.
+Standard Quantum Amplitude Estimation algorithm.
+Using QASM simulator you should not use more than 20 qubits including the QAEqubits.
+
+
+ - Input list of risk items, instrinsic and transition probabilities
+ - List of states to estimate probabilities for the desired state
+ - Precision for the QAE
+ - Number of shots
+
+
+**Syntax**
+
+Helper functions:
+from qiskit.circuit.library import QFT
+
+Main functions:
+brm(RIlist, TPlist, model2gate=False)
+brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
+qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
+
+
+**Parameters**
+    Risk model:
+    - RIlist: risk items with intrinsic probabilities
+    - TPlist: transitions from risk item i to risk item j
+    - Optional model2gate=False (default) used to evaluate model directly. Set model2gate=True to use the model as custom gate inside the Grover operator
+    
+    Grover operator:
+    - PDFgenerator = underlying risk model (brm)
+    - pdfqubits = QAE bit resolution
+    - LISTOFcontrolstrings = string of states that we are searching the overall probability 
+    
+    Quantum Amplitude Estimation:
+    - QAEqubits: outqubits is the number of qubits to use for the output
+    - inqubits: number of risk items
+    - modelinqubits is the number of qubits A requires (this may include ancillas, ie is >= inqubits)
+    - A is a gate that generates the input to be estimated
+    - Q is the oracle (one qubit larger than A and controlled)
+    - Optional: qae2gate=False (default)
+
+**Examples**
+
+ RIlist = ["p0=0.1","p1=0.2"]
+ TPlist = ["0->1=0.2"]
+
+ name="test"
+ STATELIST=["11"]
+ Nshots=1000 
+ QAEqubits=6 
+
+
+ rm,mat = brm(RIlist,TPlist,model2gate=True)
+ ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
+ QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
