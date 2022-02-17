@@ -60,3 +60,10 @@ def maxString(counts):
     stringList=allCombinations(bits)
     maxi=np.argmax(probList)
     return stringList[maxi]
+    
+def showQAEoutput(counts):
+    print("Bin with the highest probability: ",maxString(counts))
+    print("Number of Bin with the highest probability: ",bin2num(maxString(counts)))
+    probTail=math.sin(bin2num(maxString(counts))*math.pi/(2**QAEqubits))**2
+    print("The probability of tail events is: ",probTail)
+    return probTail
