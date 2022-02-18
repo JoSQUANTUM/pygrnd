@@ -1,7 +1,15 @@
 # pygrnd 
 is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH to support the development of Applications for quantum computing in Finance, Insurance and Energy.
 
-## Install pygrnd
+## Setup
+
+ git clone https://github.com/JoSQUANTUM/pygrnd.git
+ cd pygrnd
+ conda env create -f environment.yml
+ conda activate pygrnd
+
+
+## Manuall installation
 
 Pre-required: Qiskit Version 'qiskit': '0.32.1'
 
@@ -14,7 +22,8 @@ Pre-required: Qiskit Version 'qiskit': '0.32.1'
 
  pip install .
 
-## Tutorials
+ 
+# Tutorials
 
 ## Amplitude Estimation without Phase Estimation
 
@@ -235,6 +244,7 @@ Main functions:
 brm(RIlist, TPlist, model2gate=False)
 brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
 qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
+showQAEoutput(counts,STATELIST)
 
 
 **Parameters**
@@ -270,3 +280,4 @@ qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
  rm,mat = brm(RIlist,TPlist,model2gate=True)
  ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
  QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
+ showQAEoutput(counts,STATELIST)

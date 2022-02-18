@@ -1,0 +1,14 @@
+# Setting up a conda environment for pygrnd
+
+name: pygrnd
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - matplotlib
+  - python>=3.8.2
+  - jupyter
+  - scikit-learn
+  - pip
+  - pip:
+    - qiskit
