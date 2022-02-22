@@ -777,6 +777,110 @@ def createSATquboPenalty(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcos
     return m, maps
 
 
+#
+# Add a 2SAT formula to the QUBO
+# sort y0 and y1 before adding to m
+#
+
+
+def add2SATQUBOSort(m,x0,x1):
+
+    q00=[-2, 1, 1, -1, 1, 1]
+    q01=[-2, 1, 1, 0, 0, -2]
+    q10=[-2, 1, 1, 0, -2, 0]
+    q11=[-1, -2, 1, 0, 0, -2]
+
+
+    y0=abs(x0)-1
+    print(y0)
+    y1=abs(x1)-1
+    print(y1)
+
+    qX=0
+    if x0>0 and x1>0:
+        qX=q00
+    elif x0>0 and x1<0:
+        qX=q01
+    elif x0<0 and x1>0:
+        qX=q10
+    elif x0<0 and x1<0:
+        qX=q11
+
+    a0=qX[0]
+    a1=qX[1]
+    a2=qX[2]
+    b0=qX[3]
+    b1=qX[4]
+    b2=qX[5]
+
+    m[y0,y0]=m[y0,y0]+a1*b1+a0*b1+a1*b0
+    if y0<y1:
+        m[y0,y1]=m[y0,y1]+a1*b2+a2*b1
+    else:
+        m[y1,y0]=m[y1,y0]+a1*b2+a2*b1
+    m[y1,y1]=m[y1,y1]+a2*b2+a0*b2+a2*b0
+
+
+
+#
+# Add the equation (x0 or x1)=s to the qubo.
+# Variables start from 1 and -x is negated variable. s must be positive.
+#
+def addEquationQUBOSort(m,x0,x1,s):
+
+    # # sort y0 and y1 before adding to m
+
+    # These are the relevant factors. The polynomial is:
+    p00=[0, 1, 1, -2, 0, 1, 1, -1]
+    p01=[1, 1, -1, -2, 1, 1, -1, -1]
+    p10=[1, -1, 1, -2, 1, -1, 1, -1]
+    p11=[-3, 1, 1, 2, -2, 1, 1, 2]
+
+
+    if s<0:
+        print("s must be positive!")
+        return
+    # Get indices starting from 0
+    y0=abs(x0)-1
+    y1=abs(x1)-1
+    y2=abs(s)-1
+
+    pX=0
+    if x0>0 and x1>0:
+        pX=p00
+    elif x0>0 and x1<0:
+        pX=p01
+    elif x0<0 and x1>0:
+        pX=p10
+    elif x0<0 and x1<0:
+        pX=p11
+
+    a0=pX[0]
+    a1=pX[1]
+    a2=pX[2]
+    a3=pX[3]
+    b0=pX[4]
+    b1=pX[5]
+    b2=pX[6]
+    b3=pX[7]
+    # Now add the elements to the matrix.
+    m[y0,y0]=m[y0,y0]+a1*b1+a0*b1+a1*b0
+    if y0<y1:
+        m[y0,y1]=m[y0,y1]+a1*b2+a2*b1
+    else:
+        m[y1,y0]=m[y1,y0]+a1*b2+a2*b1
+    if y0<y2:
+        m[y0,y2]=m[y0,y2]+a1*b3+a3*b1
+    else:
+        m[y2,y0]=m[y2,y0]+a1*b3+a3*b1
+    m[y1,y1]=m[y1,y1]+a2*b2+a0*b2+a2*b0
+    if y1<y2:
+        m[y1,y2]=m[y1,y2]+a2*b3+a3*b2
+    else:
+        m[y2,y1]=m[y2,y1]+a2*b3+a3*b2
+    m[y2,y2]=m[y2,y2]+a3*b3+a0*b3+a3*b0
+
+
 # using sorted 2SAT, SATFormulas
 # create qubo with costs, demand constraint, minup constraint, startup costs, min down
 
