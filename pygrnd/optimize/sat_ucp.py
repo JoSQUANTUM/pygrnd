@@ -694,7 +694,7 @@ def matrix2qubo(m):
 
 # ADAPTIVE PENALTY TERMS PDemand,PCost,PStart,PConstr
 ## createSATqubo(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDemand,PCost,PStart,PConstr)
-def createSATqubo(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDemand=100,PCost=10,PStart=1,PConstr=1,verbose=True):
+def createSATquboPenalty(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDemand=100,PCost=10,PStart=1,PConstr=1,verbose=True):
 
     # input check
     if len(cost)!=len(startcost):
@@ -777,6 +777,104 @@ def createSATqubo(cost,maxgen,demand,minup,mindown,maxup,maxdown,startcost,PDema
     return m, maps
 
 
+# using sorted 2SAT, SATFormulas
+# create qubo with costs, demand constraint, minup constraint, startup costs, min down
+
+def createSATqubo(cost, maxgen, demand, minup, mindown, maxup, maxdown, startcost):
+
+    # input check
+    if len(cost)!=len(startcost):
+        print("wrong cost/startup input parameter")
+        return
+    
+    if len(maxgen)!=len(cost):
+        print("wrong cost/supply input parameter")
+        return
+    
+    
+    numberOfTimeSteps=len(demand)
+    numberOfUnits=len(cost)
+
+# setting up sat formulas and mapping ITERATIVE functions
+
+    sat=[]
+    for i in range(len(cost)):
+        sat.append(generateSAT(mindown[i], maxdown[i], minup[i], maxup[i],numberOfTimeSteps))
+
+    formulas, maps=concat3SATManyIterativeWrapper(sat,numberOfTimeSteps)
+    print(formulas)
+    print("Number of formulas: ",len(formulas))
+
+# constraint qubo
+    
+    maxVariable=0
+    for f in formulas:
+        for x in f:
+            maxVariable=max(maxVariable,abs(x))
+            
+    print("maxVariable: ",maxVariable)
+    convertedFormulas,maxIndex=convertAllClauses(formulas,maxVariable+1)
+    #print("convertedFormulas: ",convertedFormulas)
+    print("convertedFormulas ",convertedFormulas," maxIndex ",maxIndex)
+    m=np.zeros((maxIndex-1,maxIndex-1))
+    for c in convertedFormulas:
+        print(c)
+        if len(c)==1: # Replace clause x with x or x
+            add2SATQUBOSort(m,c[0],c[0])
+            #print("add2SATQUBOSort: ",add2SATQUBOSort(m,c[0],c[0]))
+        elif len(c)==2:
+            add2SATQUBOSort(m,c[0],c[1])
+            #print("add2SATQUBOSort: ",add2SATQUBOSort(m,c[0],c[1]))
+        elif len(c)==3:
+            addEquationQUBOSort(m,c[0],c[1],c[2])
+            #print("addEquationQUBOSort: ",addEquationQUBOSort(m,c[0],c[1],c[2]))
+            
+    print("Constraint QUBO:\n ",m)
+#------------
+# Adding Costs
+
+    for i in range(numberOfUnits):
+        currentMapping=maps[i]
+        currentCost=cost[i]
+        currentstartupCost=startcost[i]
+        
+        for j in currentMapping:
+            m[j,j]=m[j,j]+currentCost*maxgen[i]    # costs
+        #print("Costs: ",m[j,j])
+            
+        for j in currentMapping[1:]:
+            m[j,j]=m[j,j]+currentstartupCost       # startcost
+            print(m[j,j])
+            m[j-1,j]=m[j-1,j]-currentstartupCost   # startcost
+            print(m[j-1,j])
+        #print("Startcosts: ",m[j,j])
+        
+    print("Cost QUBO:\n ",m)
+
+# Create the conditions for demand satisfaction (each power station can create maxgen[i] units)
+# See formula above for (a_i+b_i-d_i)^2
+
+    penaltyDemand=100
+    print("penaltyDemand: ",penaltyDemand)
+
+    for t in range(numberOfTimeSteps):
+        mappingsThisTimeStep=[]
+        for k in maps:
+            mappingsThisTimeStep.append(k[t])
+
+        for ix in range(len(mappingsThisTimeStep)):
+            x=mappingsThisTimeStep[ix]
+#            m[x,x]=m[x,x]+penaltyDemand*(1-2*demand[t])
+            m[x,x]=m[x,x]+penaltyDemand*(maxgen[ix]**2-2*demand[t]*maxgen[ix])
+        #print("Demand: ",m[x,x])
+            for iy in range(ix+1,len(mappingsThisTimeStep)):
+                y=mappingsThisTimeStep[iy]
+#                m[x,y]=m[x,y]+penaltyDemand*2
+                m[x,y]=m[x,y]+2*penaltyDemand*maxgen[ix]*maxgen[iy]
+                #print("Demand: ",m[x,y])
+    print("Demand QUBO:\n  ",m)
+
+    return m, maps
 
 
 ## verify solutions by checking the solution vector for minup, mindown, maxup, maxdown constraints
