@@ -922,7 +922,7 @@ def createSATqubo(cost, maxgen, demand, minup, mindown, maxup, maxdown, startcos
     print("convertedFormulas ",convertedFormulas," maxIndex ",maxIndex)
     m=np.zeros((maxIndex-1,maxIndex-1))
     for c in convertedFormulas:
-        print(c)
+        #print(c)
         if len(c)==1: # Replace clause x with x or x
             add2SATQUBOSort(m,c[0],c[0])
             #print("add2SATQUBOSort: ",add2SATQUBOSort(m,c[0],c[0]))
@@ -948,9 +948,9 @@ def createSATqubo(cost, maxgen, demand, minup, mindown, maxup, maxdown, startcos
             
         for j in currentMapping[1:]:
             m[j,j]=m[j,j]+currentstartupCost       # startcost
-            print(m[j,j])
+            #print(m[j,j])
             m[j-1,j]=m[j-1,j]-currentstartupCost   # startcost
-            print(m[j-1,j])
+            #print(m[j-1,j])
         #print("Startcosts: ",m[j,j])
         
     print("Cost QUBO:\n ",m)
