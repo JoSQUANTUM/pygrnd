@@ -3,6 +3,7 @@ import numpy as np
 import random
 import itertools
 from scipy.linalg import block_diag
+from pygrnd.optimize.bruteforce import *
 
 
 # QUBO knapsack with W as total size included as penalty
