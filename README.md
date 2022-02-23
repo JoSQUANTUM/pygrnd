@@ -24,6 +24,72 @@ Pre-required: Qiskit Version 'qiskit': '0.32.1'
  
 # Tutorials
 
+
+## Quantum Risk Modelling
+
+Workflow to define a risk model like outlined in (https://arxiv.org/abs/2103.05475).
+Build a Grover operator with a state for which the overall probabilty should be evaluated.
+Standard Quantum Amplitude Estimation algorithm.
+Using QASM simulator you should not use more than 20 qubits (including the QAEqubits) on your local machine using simulator.
+
+
+    - Input list of risk items, instrinsic and transition probabilities
+    - List of states to estimate probabilities for the desired state
+    - Precision for the QAE
+    - Number of shots
+
+
+**Syntax**
+
+Helper functions:
+from qiskit.circuit.library import QFT
+
+Main functions:
+
+    - brm(RIlist, TPlist, model2gate=False)
+    - brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
+    - qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
+    - showQAEoutput(counts,STATELIST)
+
+
+**Parameters**
+    
+    Risk model:
+    - RIlist: risk items with intrinsic probabilities
+    - TPlist: transitions from risk item i to risk item j
+    - Optional model2gate=False (default) used to evaluate model directly. Set model2gate=True to use the model as custom gate inside the Grover operator
+    
+    Grover operator:
+    - PDFgenerator = underlying risk model (brm)
+    - pdfqubits = QAE bit resolution
+    - LISTOFcontrolstrings = string of states that we are searching the overall probability 
+    
+    Quantum Amplitude Estimation:
+    - QAEqubits: outqubits is the number of qubits to use for the output
+    - inqubits: number of risk items
+    - modelinqubits is the number of qubits A requires (this may include ancillas, ie is >= inqubits)
+    - A is a gate that generates the input to be estimated
+    - Q is the oracle (one qubit larger than A and controlled)
+    - Optional: qae2gate=False (default)
+
+**Examples**
+
+    RIlist = ["p0=0.1","p1=0.2"]
+    TPlist = ["0->1=0.2"]
+
+    name="test"
+    STATELIST=["11"]
+    Nshots=1000 
+    QAEqubits=6 
+
+
+    rm,mat = brm(RIlist,TPlist,model2gate=True)
+    ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
+    QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
+    showQAEoutput(counts,STATELIST)
+
+
+
 ## Amplitude Estimation without Phase Estimation
 
 - We have an operator A and a set of good results that have probability a in total.
@@ -44,78 +110,6 @@ Example:
     bestTheta,bestProb=loopGradientOptimizerVector(vectorN, vectorM, vectorH, rounds=10, stepSize=0.01)
     print("best guess theta=",bestTheta)
     print("best guess prob=",bestProb)
-
-## Pattern-based Circuit optimizer
-
-#### Background: Patterns
-
-A pattern is an abstract representation of a sequence of quantum gates that corresponds to the identity. The gates are denoted by a string, e.g. H or X, and the parameters are variables or concrete values. The gates act on qubits that are denoted by numbers only.
-
-An example for a pattern:
-
-    [['CNOT', {}, [0, 1]], ['RX', {'theta': 1.571}, [1]], ['H', {}, [0]], ['RXX', {'theta': -1.571}, [0, 1]], ['H', {}, [0]], ['S', {}, [0]]
-
-For instance, ['RXX', {'theta': -1.571}, [0, 1]] denotes a RXX gate with parameter theta set to -1.571 that acts on qubit 0 and 1.
-
-Parameters can also be variables. The idea is that we would like to replace two consecutive rotations by a single one, i.e., we would like to replace R(a)R(b) by the rotation R(a+b). For two variables, we encode variable a by the list [1,0] and variable b by [0,1]. The sum is then [1,1], i.e. we have two basis elements and we allow linear combinations.
-
-This can be rewritten in the following pattern that represents the identity:
-
-    [ ['P',{'lambda':[0,1]},[0]], ['P',{'lambda':[1,0]},[0]],['P',{'lambda':[-1,-1]},[0]]]
-
-When doing calculations with qiskit, the variables [1,0] and [0,1] are replaced by the concrete values 0.1 and 0.6 internally. As all reductions are checked this simplification should not raise any problems.
-
-#### Background: Reduction with a pattern
-
-The pattern-based simplification works like follows:
-- Take the original circuit and create a list of all possible candidates. A candidate is a list of gates that can be considered as a single block.
-- Take the list of patterns and try to match a part of the pattern with the candidate. The pattern is longer than the candidate.
-- If the variables in the pattern can be matched with the concrete values in the candidate, then we consider the remaining part of the pattern.
-- If the remaining part of the pattern has lower costs than the replaced candidate, then we replace it by its inverse.
-
-For instance, the candidate [ ['P',{'lambda':0.25},[0]], ['P',{'lambda':0.35},[0]]] matches the first two gates of the pattern
-
-    [ ['P',{'lambda':[0,1]},[0]], ['P',{'lambda':[1,0]},[0]],['P',{'lambda':[-1,-1]},[0]]]
-
-with the variable b (represented by [0,1]) set to 0.35 and variable a (represented by [1,0]) set to 0.25. The inverse of the remaining part of the pattern
-is then [ ['P',{'lambda':0.6},[0]]]. Therefore, the P gates with parameters 0.25 and 0.35 can be replaced by a single P gate with the parameter 0.6.
-
-#### Pattern Generation
-
-**Syntax**
-
-    getIdentities(totalQubits, numberGates, prefixPattern, gates, params, qubits)
-
-**Parameters**
-- totalQubits: Number of qubits for our patterns, 2 or 3 work well
-- numberGates: Number of gates on the qubits, up to 5 works well
-- prefixPattern: This pattern is always attached to the front of a candidate. Useful if we want to replace gates with gates on less qubits.
-- gates: A list of strings. Each string denotes a gate type, e.g. X or H.
-- params: Same length as parameter gates. Each element is a dictionary for parameters for the corresponding gate, e.g. {'lambda':0.2} for a P gate
-- qubits: Same length as parameter gates. The number of qubits for the corresponding gates, e.g. 1 for an H gate
-
-**Supported gates**
-H, Z, SWAP, CNOT, CCX, CZ, S, Sdg, T, Tdg, SX, SXdg, P, RXX, GPI, GPI2, GZ, CP, RX, RY, RZ
-
-**Examples**
-
-#### Pattern Reduction
-
-**Syntax**
-
-    reduceCircuitByPattern(qc, consideredQubits, allPatterns, costPattern)
-
-**Parameters**
-- qc: Quantum circuit to be reduced
-- consideredQubits: Restrict candidate creation to this number of qubits.
-- allPatterns: The pattern database we want to use.
-- costPatterns: A function that is used to compare the cost of patterns. The method uses this function to reduce the costs.
-
-**Supported gates**
-H, Z, SWAP, CNOT, CCX, CZ, S, Sdg, T, Tdg, SX, SXdg, P, RXX, GPI, GPI2, GZ, CP, RX, RY, RZ
-
-**Examples**
-
 
 
 ## Optimizer
@@ -227,65 +221,75 @@ layer = 10
 Nshots = 10000
 vec, counts, obj, prob, qc, res2 = optimise(xxs, layer,Nshots)
 
-#### Quantum Risk Modelling
+## Pattern-based Circuit optimizer
 
-Workflow to define a risk model like outlined in (https://arxiv.org/abs/2103.05475).
-Build a Grover operator with a state for which the overall probabilty should be evaluated.
-Standard Quantum Amplitude Estimation algorithm.
-Using QASM simulator you should not use more than 20 qubits including the QAEqubits.
+#### Background: Patterns
 
+A pattern is an abstract representation of a sequence of quantum gates that corresponds to the identity. The gates are denoted by a string, e.g. H or X, and the parameters are variables or concrete values. The gates act on qubits that are denoted by numbers only.
 
-    - Input list of risk items, instrinsic and transition probabilities
-    - List of states to estimate probabilities for the desired state
-    - Precision for the QAE
-    - Number of shots
+An example for a pattern:
 
+    [['CNOT', {}, [0, 1]], ['RX', {'theta': 1.571}, [1]], ['H', {}, [0]], ['RXX', {'theta': -1.571}, [0, 1]], ['H', {}, [0]], ['S', {}, [0]]
+
+For instance, ['RXX', {'theta': -1.571}, [0, 1]] denotes a RXX gate with parameter theta set to -1.571 that acts on qubit 0 and 1.
+
+Parameters can also be variables. The idea is that we would like to replace two consecutive rotations by a single one, i.e., we would like to replace R(a)R(b) by the rotation R(a+b). For two variables, we encode variable a by the list [1,0] and variable b by [0,1]. The sum is then [1,1], i.e. we have two basis elements and we allow linear combinations.
+
+This can be rewritten in the following pattern that represents the identity:
+
+    [ ['P',{'lambda':[0,1]},[0]], ['P',{'lambda':[1,0]},[0]],['P',{'lambda':[-1,-1]},[0]]]
+
+When doing calculations with qiskit, the variables [1,0] and [0,1] are replaced by the concrete values 0.1 and 0.6 internally. As all reductions are checked this simplification should not raise any problems.
+
+#### Background: Reduction with a pattern
+
+The pattern-based simplification works like follows:
+- Take the original circuit and create a list of all possible candidates. A candidate is a list of gates that can be considered as a single block.
+- Take the list of patterns and try to match a part of the pattern with the candidate. The pattern is longer than the candidate.
+- If the variables in the pattern can be matched with the concrete values in the candidate, then we consider the remaining part of the pattern.
+- If the remaining part of the pattern has lower costs than the replaced candidate, then we replace it by its inverse.
+
+For instance, the candidate [ ['P',{'lambda':0.25},[0]], ['P',{'lambda':0.35},[0]]] matches the first two gates of the pattern
+
+    [ ['P',{'lambda':[0,1]},[0]], ['P',{'lambda':[1,0]},[0]],['P',{'lambda':[-1,-1]},[0]]]
+
+with the variable b (represented by [0,1]) set to 0.35 and variable a (represented by [1,0]) set to 0.25. The inverse of the remaining part of the pattern
+is then [ ['P',{'lambda':0.6},[0]]]. Therefore, the P gates with parameters 0.25 and 0.35 can be replaced by a single P gate with the parameter 0.6.
+
+#### Pattern Generation
 
 **Syntax**
 
-Helper functions:
-from qiskit.circuit.library import QFT
-
-Main functions:
-
-    - brm(RIlist, TPlist, model2gate=False)
-    - brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
-    - qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
-    - showQAEoutput(counts,STATELIST)
-
+    getIdentities(totalQubits, numberGates, prefixPattern, gates, params, qubits)
 
 **Parameters**
-    
-    Risk model:
-    - RIlist: risk items with intrinsic probabilities
-    - TPlist: transitions from risk item i to risk item j
-    - Optional model2gate=False (default) used to evaluate model directly. Set model2gate=True to use the model as custom gate inside the Grover operator
-    
-    Grover operator:
-    - PDFgenerator = underlying risk model (brm)
-    - pdfqubits = QAE bit resolution
-    - LISTOFcontrolstrings = string of states that we are searching the overall probability 
-    
-    Quantum Amplitude Estimation:
-    - QAEqubits: outqubits is the number of qubits to use for the output
-    - inqubits: number of risk items
-    - modelinqubits is the number of qubits A requires (this may include ancillas, ie is >= inqubits)
-    - A is a gate that generates the input to be estimated
-    - Q is the oracle (one qubit larger than A and controlled)
-    - Optional: qae2gate=False (default)
+- totalQubits: Number of qubits for our patterns, 2 or 3 work well
+- numberGates: Number of gates on the qubits, up to 5 works well
+- prefixPattern: This pattern is always attached to the front of a candidate. Useful if we want to replace gates with gates on less qubits.
+- gates: A list of strings. Each string denotes a gate type, e.g. X or H.
+- params: Same length as parameter gates. Each element is a dictionary for parameters for the corresponding gate, e.g. {'lambda':0.2} for a P gate
+- qubits: Same length as parameter gates. The number of qubits for the corresponding gates, e.g. 1 for an H gate
+
+**Supported gates**
+H, Z, SWAP, CNOT, CCX, CZ, S, Sdg, T, Tdg, SX, SXdg, P, RXX, GPI, GPI2, GZ, CP, RX, RY, RZ
 
 **Examples**
 
-    RIlist = ["p0=0.1","p1=0.2"]
-    TPlist = ["0->1=0.2"]
+#### Pattern Reduction
 
-    name="test"
-    STATELIST=["11"]
-    Nshots=1000 
-    QAEqubits=6 
+**Syntax**
+
+    reduceCircuitByPattern(qc, consideredQubits, allPatterns, costPattern)
+
+**Parameters**
+- qc: Quantum circuit to be reduced
+- consideredQubits: Restrict candidate creation to this number of qubits.
+- allPatterns: The pattern database we want to use.
+- costPatterns: A function that is used to compare the cost of patterns. The method uses this function to reduce the costs.
+
+**Supported gates**
+H, Z, SWAP, CNOT, CCX, CZ, S, Sdg, T, Tdg, SX, SXdg, P, RXX, GPI, GPI2, GZ, CP, RX, RY, RZ
+
+**Examples**
 
 
-    rm,mat = brm(RIlist,TPlist,model2gate=True)
-    ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
-    QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
-    showQAEoutput(counts,STATELIST)
