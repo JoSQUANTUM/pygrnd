@@ -3,24 +3,23 @@ is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH t
 
 ## Setup
 
- git clone https://github.com/JoSQUANTUM/pygrnd.git
- cd pygrnd
- conda env create -f environment.yml
- conda activate pygrnd
 
+    git clone https://github.com/JoSQUANTUM/pygrnd.git
+    cd pygrnd
+    conda env create -f environment.yml
+    conda activate pygrnd
 
-## Manuall installation
 
 Pre-required: Qiskit Version 'qiskit': '0.32.1'
 
- pip install qiskit
- pip install numpy
- pip install dimod
- pip install greedy
 
- got to /[yourpath]/pygrnd
-
- pip install .
+     pip install qiskit
+     pip install numpy
+     pip install dimod
+     pip install greedy
+     
+     got to /[yourpath]/pygrnd
+     pip install .
 
  
 # Tutorials
@@ -134,6 +133,7 @@ Usually a QUBO is defined as a numpy array or dict.
 MonteCarloSolver.py
 
 **Syntax**
+    
     r,a=MCfullsolver(Q,N)
 
 **Parameters**
@@ -143,6 +143,7 @@ MonteCarloSolver.py
 - a: solution vetor
 
 **Examples**
+    
     from pygrnd.optimize.MonteCarloSolver import *
     Q = np.array([[10,-3,-4,-6],[-3,4,-2,-3],[-4,-2,6,-5],[-6,-3,-5,12]])
     N=10
@@ -159,6 +160,7 @@ MonteCarloSolver.py
 MonteCarloGradientSearch.py
 
 **Syntax**
+    
     r,a=MCfullsolver(Q,N)
 
 **Parameters**
@@ -168,6 +170,7 @@ MonteCarloGradientSearch.py
 - a: solution vetor
 
 **Examples**
+    
     from pygrnd.optimize.MonteCarloGradientSearch import *
     Q = np.array([[10,-3,-4,-6],[-3,4,-2,-3],[-4,-2,6,-5],[-6,-3,-5,12]])
     N=10
@@ -193,23 +196,26 @@ qaoa.py
 **Syntax**
 
 Helper functions:
-num2bin(x,r)
-allCombinations(n)
-counts2probs(counts)
-fidelityCounts(countsP, countsQ)
-maxString(counts)
-eval_solution(x,m)
-matrixConvertInv(m)
-addGates(qr,qc,m1,gamma)
-qaoaLandscape(m,n,Nshots)
+
+    num2bin(x,r)
+    allCombinations(n)
+    counts2probs(counts)
+    fidelityCounts(countsP, countsQ)
+    maxString(counts)
+    eval_solution(x,m)
+    matrixConvertInv(m)
+    addGates(qr,qc,m1,gamma)
+    qaoaLandscape(m,n,Nshots)
 
 Main functions:
-vec, counts, obj, qc, prob = qaoaExp(m0,beta,gamma,Nshots,backend = Aer.get_backend('qasm_simulator'))
-obj = multiLayerqaoaExp(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator'))
-vec, counts, obj, prob, qc = multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator'))
+
+    vec, counts, obj, qc, prob = qaoaExp(m0,beta,gamma,Nshots,backend = Aer.get_backend('qasm_simulator'))
+    obj = multiLayerqaoaExp(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator'))
+    vec, counts, obj, prob, qc = multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator'))
 
 Full workflow:
-vec, counts, obj, prob, qc, res1, res2, bestBetas, bestGammas = QAOAoptimize(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator'))
+
+    vec, counts, obj, prob, qc, res1, res2, bestBetas, bestGammas = QAOAoptimize(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator'))
 
 
 **Parameters**
@@ -229,10 +235,10 @@ Standard Quantum Amplitude Estimation algorithm.
 Using QASM simulator you should not use more than 20 qubits including the QAEqubits.
 
 
- - Input list of risk items, instrinsic and transition probabilities
- - List of states to estimate probabilities for the desired state
- - Precision for the QAE
- - Number of shots
+    - Input list of risk items, instrinsic and transition probabilities
+    - List of states to estimate probabilities for the desired state
+    - Precision for the QAE
+    - Number of shots
 
 
 **Syntax**
@@ -241,13 +247,15 @@ Helper functions:
 from qiskit.circuit.library import QFT
 
 Main functions:
-brm(RIlist, TPlist, model2gate=False)
-brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
-qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
-showQAEoutput(counts,STATELIST)
+
+    - brm(RIlist, TPlist, model2gate=False)
+    - brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
+    - qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
+    - showQAEoutput(counts,STATELIST)
 
 
 **Parameters**
+    
     Risk model:
     - RIlist: risk items with intrinsic probabilities
     - TPlist: transitions from risk item i to risk item j
@@ -268,16 +276,16 @@ showQAEoutput(counts,STATELIST)
 
 **Examples**
 
- RIlist = ["p0=0.1","p1=0.2"]
- TPlist = ["0->1=0.2"]
+    RIlist = ["p0=0.1","p1=0.2"]
+    TPlist = ["0->1=0.2"]
 
- name="test"
- STATELIST=["11"]
- Nshots=1000 
- QAEqubits=6 
+    name="test"
+    STATELIST=["11"]
+    Nshots=1000 
+    QAEqubits=6 
 
 
- rm,mat = brm(RIlist,TPlist,model2gate=True)
- ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
- QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
- showQAEoutput(counts,STATELIST)
+    rm,mat = brm(RIlist,TPlist,model2gate=True)
+    ora = brmoracle("ora",rm,len(RIlist),0,STATELIST)
+    QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
+    showQAEoutput(counts,STATELIST)

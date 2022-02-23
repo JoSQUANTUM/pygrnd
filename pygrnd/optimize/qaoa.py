@@ -278,7 +278,7 @@ def multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulat
 ## Random init of beta, gamma
 ## returns circuit, parameters and found results
     
-def QAOAoptimize(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def QAOAoptimizeMaxCount(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
 
     def QAOAobjectiveFunction(x):
         size=len(x)
@@ -325,9 +325,6 @@ def QAOAoptimize(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
 
 
 
-
-
-#"""Do a grid search over values of 𝛄 and β."""
 # Set the grid size and range of parameters.
 
 def qaoaLandscape(m,n,Nshots):
@@ -348,11 +345,191 @@ def qaoaLandscape(m,n,Nshots):
                 obj2=obj
                 print(beta,gamma,vec,obj2)
             
-    """Plot the energy as a function of the parameters 𝛄 and β found in the grid search."""
+    """Plot the energy as a function of the parameters found in the grid search."""
     plt.ylabel(r"$\gamma$")
     plt.xlabel(r"$\beta$")
     plt.title("Energy as a function of parameters")
     #plt.imshow(energies, extent=(0, beta_max, gamma_max, 0))
     plt.imshow(energies, extent=(0, beta_max, 0, gamma_max))
     plt.colorbar()
+
+
+
+
+## method by approximating the expectation value with the overall average of counts evaluated with the cost function
+
+def multiLayerqaoaExpectation(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+    
+    mPauli=matrixConvertInv(m)
+    
+    qr=QuantumRegister(len(mPauli),'q')
+    cr=ClassicalRegister(len(mPauli),'c')
+    qc=QuantumCircuit(qr,cr)
+
+    
+    for i in range(len(mPauli)):
+        qc.h(qr[i])
+    qc.barrier()
+        
+    for j in range(len(betas)):
+        
+        addGates(qr,qc,mPauli,gammas[j])
+        qc.barrier()
+        for k in range(len(mPauli)):
+            qc.ry(betas[j],qr[k])
+            #qc.barrier()
+        qc.barrier()
+    qc.measure(qr,cr)
+
+    #backend=Aer.get_backend("qasm_simulator")
+    job = execute(qc, backend,shots=Nshots)
+    counts=job.result().get_counts()
+
+    avg = 0
+    sum_count = 0
+
+    for c in counts:
+        #print(c,counts[c])
+        y=counts[c]
+        x=[]
+        for i in c:
+            x.append(int(i))
+
+        #print(c,counts[c],x,eval_solution(x,m))
+        obj=eval_solution(x,m)
+        #print("Counts = ",y)
+        avg += obj * y
+        sum_count += y
+        #expectationValue += (counts[c]*eval_solution(x,m))/Nshots
+    expectationValue = avg/sum_count
+    #print(expectationValue)
+    #print(avg/sum_count)
+    return expectationValue
+
+
+# calculate expectation value through multi layer qaoa
+
+def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+    
+    mPauli=matrixConvertInv(m)
+    
+    qr=QuantumRegister(len(mPauli),'q')
+    cr=ClassicalRegister(len(mPauli),'c')
+    qc=QuantumCircuit(qr,cr)
+
+    
+    for i in range(len(mPauli)):
+        qc.h(qr[i])
+    qc.barrier()
+        
+    for j in range(len(betas)):
+        
+        addGates(qr,qc,mPauli,gammas[j])
+        qc.barrier()
+        for k in range(len(mPauli)):
+            qc.ry(betas[j],qr[k])
+            #qc.barrier()
+        qc.barrier()
+    qc.measure(qr,cr)
+
+    #backend=Aer.get_backend("qasm_simulator")
+    job = execute(qc, backend,shots=Nshots)
+    counts=job.result().get_counts()
+
+    
+    avg = 0
+    sum_count = 0
+
+    for c in counts:
+        #print(c,counts[c])
+        y=counts[c]
+        x=[]
+        for i in c:
+            x.append(int(i))
+
+        #print(c,counts[c],x,eval_solution(x,m))
+        obj=eval_solution(x,m)
+        #print("Counts = ",y)
+        avg += obj * y
+        sum_count += y
+        #expectationValue += (counts[c]*eval_solution(x,m))/Nshots
+    expectationValue = avg/sum_count
+    #print(expectationValue)
+    #print(avg/sum_count)
+    #return obj
+    
+    # pull result with highest count
+    maxValue=-math.inf
+    for c in counts:
+        if counts[c]>maxValue:
+            maxValue=counts[c]
+            prob=maxValue/Nshots
+    for c in counts:
+        if counts[c]==maxValue:
+            #print(c,counts[c])
+            vec=c
+
+    # calculate cost
+    x=[]
+    for i in maxString(counts):
+        x.append(int(i))
+
+    optimum=eval_solution(x,m)
+    
+    return vec, counts, expectationValue, prob, qc, optimum
+    #return obj
+    
+    
+    
+## functions using scipy minimize Nelder-Mead optimizer for multi layer QAOA
+## Random init of beta, gamma
+## returns circuit, parameters and found results
+    
+def QAOAoptimizeExpectation(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
+
+    def QAOAobjectiveFunctionExpectation(x):
+        size=len(x)
+        size2=size//2
+        return multiLayerqaoaExpectation(m,x[:size2],x[size2:],Nshots,backend)
+
+    
+    print("Selected device: ",backend," with ",Nshots,"shots")
+    numberofparameters=2*layer
+    print("Trying ",layer," layer")
+    
+    print("Generating inital random parameters beta and gamma")
+    x0 = [random.uniform(-2*pi, 2*pi) for i in range(numberofparameters)]
+    print("Starting with betas: ",x0[:(numberofparameters//2)])
+    print("Starting with gammas: ",x0[(numberofparameters//2):])
+    #x0 = [random.uniform(0,2*pi) for i in range(layer)]
+    
+    print("Optimize FIRST round with random initialisation")
+    # Optimise alpha and beta using the cost function <s|H|s>
+    res1 = minimize(QAOAobjectiveFunctionExpectation, x0, method="Nelder-Mead")
+    #print(res1)
+    
+    print("Optimize SECOND round with the found initialization")
+    res2 = minimize(QAOAobjectiveFunctionExpectation, res1.x, method="Nelder-Mead")
+    #print(res2)
+    bestBetas = res2.x[:(numberofparameters//2)]
+    bestGammas = res2.x[(numberofparameters//2):]
+    print("Best Beta", bestBetas,"Best Gamma", bestGammas)
+    
+    print("Now run the QAOA with the found parameters")
+    vec, counts, expectationValue, prob, qc, optimum = multiLayerqaoaExpectation1(m, bestBetas, bestGammas,Nshots,backend)
+    print("----------------------------------------------")
+    print("Expectation value = ",expectationValue)
+    print("----------------------------------------------")
+    print("Optimum = ",optimum," with probability = ", prob)
+    print("----------------------------------------------")
+    print('Depth:', qc.depth())
+    print('Gate counts:', qc.count_ops())
+    
+    #print(vec, obj)
+    #print('Depth:', qc.depth())
+    #print('Gate counts:', qc.count_ops())
+    #plot_histogram(counts)
+    
+    return vec, counts, expectationValue, prob, qc, res1, res2, bestBetas, bestGammas, optimum
+
 
