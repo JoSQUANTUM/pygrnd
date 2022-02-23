@@ -918,8 +918,8 @@ def createSATqubo(cost, maxgen, demand, minup, mindown, maxup, maxdown, startcos
             
     print("maxVariable: ",maxVariable)
     convertedFormulas,maxIndex=convertAllClauses(formulas,maxVariable+1)
-    #print("convertedFormulas: ",convertedFormulas)
-    print("convertedFormulas ",convertedFormulas," maxIndex ",maxIndex)
+    print("convertedFormulas: ",convertedFormulas)
+    #print("convertedFormulas ",convertedFormulas," maxIndex ",maxIndex)
     m=np.zeros((maxIndex-1,maxIndex-1))
     for c in convertedFormulas:
         #print(c)
