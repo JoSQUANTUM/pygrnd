@@ -484,8 +484,10 @@ def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = Aer.get_backend('
 ## functions using scipy minimize Nelder-Mead optimizer for multi layer QAOA
 ## Random init of beta, gamma
 ## returns circuit, parameters and found results
+## optional backend: can be executed on simulator (default) or real harware
+## optonal optimizer: "Nelder-Mead" (default), "COBYLA", "SLSQP"
     
-def QAOAoptimizeExpectation(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def QAOAoptimizeExpectation(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator'),method="Nelder-Mead"):
 
     def QAOAobjectiveFunctionExpectation(x):
         size=len(x)
@@ -505,11 +507,11 @@ def QAOAoptimizeExpectation(m,layer,Nshots,backend = Aer.get_backend('qasm_simul
     
     print("Optimize FIRST round with random initialisation")
     # Optimise alpha and beta using the cost function <s|H|s>
-    res1 = minimize(QAOAobjectiveFunctionExpectation, x0, method="Nelder-Mead")
+    res1 = minimize(QAOAobjectiveFunctionExpectation, x0, method=method)
     #print(res1)
     
     print("Optimize SECOND round with the found initialization")
-    res2 = minimize(QAOAobjectiveFunctionExpectation, res1.x, method="Nelder-Mead")
+    res2 = minimize(QAOAobjectiveFunctionExpectation, res1.x, method=method)
     #print(res2)
     bestBetas = res2.x[:(numberofparameters//2)]
     bestGammas = res2.x[(numberofparameters//2):]
