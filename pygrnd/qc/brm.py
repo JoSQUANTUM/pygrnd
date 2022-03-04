@@ -48,14 +48,14 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
         for j in range(i+1,len(nodes)):
             if (nodes[i],nodes[j]) in probsEdges:
                 mat[i][j]=probsEdges[(nodes[i],nodes[j])]
-    print(mat)
+    #print(mat)
     
     
     for x in range(len(nodes)):
         cx=0
         cv=[]
     #       print("checking col",x)
-        for y in range(len(RIlist)):
+        for y in range(len(nodes)):
             if mat[y,x] !=0 and x>y:
                 cx=1
                 cv.append(y)
@@ -71,7 +71,7 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
                 controllist.append(qr[y])
                 for i in range(2**len(cv)):
                     cts = format(i, "0"+str(len(cv))+"b")
-                    print(cts)
+                    #print(cts)
                     if i==0:
                         p = mat[y,y]
                     else:
@@ -80,7 +80,7 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
                         print("ITEM:")
                         for j in range(len(cv)):
                             if cts[j]=="1":
-                                print("mat[y,j]",mat[j,y])
+                                #print("mat[y,j]",mat[j,y])
                                 p=p*(1-pbef)*mat[j,y]
                                 pbef=mat[j,y]
 
