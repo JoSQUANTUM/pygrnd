@@ -33,7 +33,7 @@ Standard Quantum Amplitude Estimation algorithm.
 Using QASM simulator you should not use more than 20 qubits (including the QAEqubits) on your local machine using simulator.
 
 
-    - Input list of risk items, instrinsic and transition probabilities
+    - Input risk items, instrinsic and transition probabilities
     - List of states to estimate probabilities for the desired state
     - Precision for the QAE
     - Number of shots
@@ -46,7 +46,7 @@ from qiskit.circuit.library import QFT
 
 Main functions:
 
-    - brm(RIlist, TPlist, model2gate=False)
+    - brm(nodes, edges, probsNodes, probsEdges, model2gate=False)
     - brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings)
     - qae(QAEqubits, inqubits, modelinqubits, A, Q, qae2gate=False)
     - showQAEoutput(counts,STATELIST)
@@ -54,11 +54,13 @@ Main functions:
 
 **Parameters**
     
-    Risk model:
-    - RIlist: risk items with intrinsic probabilities
-    - TPlist: transitions from risk item i to risk item j
-    - Optional model2gate=False (default) used to evaluate model directly. Set model2gate=True to use the model as custom gate inside the Grover operator
-    
+    Risk model input:
+    - Risk item list e.g.  nodes = ['0','1']
+    - Correlation risk e.g. edges=[('0','1')] # correlations
+    - probsNodes={'0':0.1,'1':0.1} # intrinsic probs
+    - probsEdges={('0','1'):0.2} # transition probs
+    - output: either circuit (model2gate=False) OR gate (model2gate=True)
+        
     Grover operator:
     - PDFgenerator = underlying risk model (brm)
     - pdfqubits = QAE bit resolution
@@ -74,8 +76,11 @@ Main functions:
 
 **Examples**
 
-    RIlist = ["p0=0.1","p1=0.2"]
-    TPlist = ["0->1=0.2"]
+    nodes=['0','1'] # risk items defition
+    edges=[('0','1')] # correlations
+
+    probsNodes={'0':0.1,'1':0.1} # intrinsic probs
+    probsEdges={('0','1'):0.2} # transition probs
 
     name="test"
     STATELIST=["11"]
@@ -88,6 +93,9 @@ Main functions:
     QAE=qae(QAEqubits,len(RIlist),len(RIlist),rm,ora)
     showQAEoutput(counts,STATELIST)
 
+
+    Classical evaluation of risk model:
+    - states, summe = modelProbabilities(nodes,edges,probsNodes,probsEdges)
 
 
 ## Amplitude Estimation without Phase Estimation

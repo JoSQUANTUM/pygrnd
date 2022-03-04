@@ -6,9 +6,12 @@ channels:
   - defaults
 dependencies:
   - matplotlib
-  - python>=3.8.2
-  - jupyter
-  - scikit-learn
+  - python
   - pip
   - pip:
     - qiskit
+    - scipy
+    - jupyter
+    - dimod
+    - dwave-greedy
+    
