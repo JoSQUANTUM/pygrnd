@@ -5,13 +5,14 @@
 def MCfullsolver(Q,N):
 
     import random
+    from tqdm import tqdm
     # Find good solutions and map them back.
 
     cheapestPrice=float('inf')
     vector=0
 
     #while True:
-    for i in range(N):
+    for i in tqdm(range(N)):
         v=np.zeros((1,len(Q)))
         for i in range(len(Q)):
             v[0,i]=round(random.random())

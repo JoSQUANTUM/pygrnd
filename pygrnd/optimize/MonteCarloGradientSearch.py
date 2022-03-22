@@ -5,6 +5,7 @@ def MCgradientSearch(Q,N):
     
     import random
     import numpy as np
+    from tqdm import tqdm
     
     v=np.random.randint(2, size=(1, len(Q)))
     
@@ -50,7 +51,7 @@ def MCgradientSearch(Q,N):
     vector=0
 
     #while True:
-    for i in range(N):
+    for i in tqdm(range(N)):
         v=np.zeros((1,len(Q)))
         for i in range(len(Q)):
             v[0,i]=round(random.random())
