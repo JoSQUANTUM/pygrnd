@@ -2,7 +2,7 @@
 # Solve QUBOs by randomly multiplying (0,1) vectors and checking costs
 # QUBO Q, N runs
 
-def MCfullsolver(Q,N):
+def MCsolver(Q,N):
 
     import random
     from tqdm import tqdm
