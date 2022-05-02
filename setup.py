@@ -12,16 +12,21 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-import setuptools
+from setuptools import setup
 
-setuptools.setup(
-    name="pygrnd",
-    packages=setuptools.find_packages(),
+setup(
+    name='pygrnd',
+    version='0.1.0',
+    description='A Python library for quantum algorithms and software',
+    url='https://github.com/JoSQUANTUM/pygrnd',
+    author='JoS QUANTUM',
+    license='Apache 2.0',
     zip_safe=False,
     include_package_data=True,
+    packages=['pygrnd'],
     classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: Apache Software License",
-        "Operating System :: OS Independent",
+        'Programming Language :: Python :: 3',
+        'License :: OSI Approved :: Apache Software License',
+        'Operating System :: OS Independent'
     ],
 )
