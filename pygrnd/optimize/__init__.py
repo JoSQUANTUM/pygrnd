@@ -13,7 +13,6 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 __all__ = ['sat_ucp']
-__all__ = ['MonteCarloGradientSearch']
 __all__ = ['MonteCarloSolver']
 __all__ = ['qaoa']
 __all__ = ['meritorder']
