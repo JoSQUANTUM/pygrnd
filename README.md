@@ -3,23 +3,16 @@ is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH t
 
 ## Setup
 
+Pre-required: Qiskit Version 'qiskit': '0.32.1'
+   
+    pip install qiskit
+    pip install numpy
+    pip install dimod
+    pip install greedy
 
     git clone https://github.com/JoSQUANTUM/pygrnd.git
     cd pygrnd
-    conda env create -f environment.yml
-    conda activate pygrnd
-
-
-Pre-required: Qiskit Version 'qiskit': '0.32.1'
-
-
-     pip install qiskit
-     pip install numpy
-     pip install dimod
-     pip install greedy
-     
-     got to /[yourpath]/pygrnd
-     pip install .
+    pip install .
 
  
 # Tutorials
