@@ -1,1 +1,1 @@
-__all__ = ['qae','brm','brm_oracle','qaoa','MaximumLikelihoodForQAEwoPE', 'optimize', 'patternGenerator', 'patternReducer']
+__all__ = ['QAE','brm','brm_oracle','MaximumLikelihoodForQAEwoPE', 'optimize', 'patternGenerator', 'patternReducer', 'parallelQAE']

@@ -1,18 +1,14 @@
-# Setting up a conda environment for pygrnd
-
 name: pygrnd
-channels:
-  - conda-forge
-  - defaults
 dependencies:
+  - numpy
+  - scipy
+  - jupyter
   - matplotlib
-  - python
+  - pylatexenc
+  - networkx
   - pip
   - pip:
     - qiskit
-    - scipy
-    - jupyter
     - dimod
     - dwave-greedy
     - tqdm
-    
