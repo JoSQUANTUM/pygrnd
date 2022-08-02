@@ -24,13 +24,14 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
          Correlation risk e.g. edges=[('0','1')] # correlations
          probsNodes={'0':0.1,'1':0.1} # intrinsic probs
          probsEdges={('0','1'):0.2} # transition probs
-         output: either circuit (model2gate=False) OR gate (model2gate=True)
+         output: either circuit (model2gate=False) OR gate (model2gate=True) and the 
+                 matrix with the probabilities of the nodes and the edges
     """
 
     qr=QuantumRegister(len(nodes),'q')
-    qc = QuantumCircuit(qr)
+    qc=QuantumCircuit(qr)
     
-    # now find RI which cannot be triggered by transitions and put uncontrolled u3 gates in for them
+    # Turn probabilities for nodes and edges into matrix form.
     mat=np.zeros((len(nodes),len(nodes)))
     for i in range(len(nodes)):
         mat[i][i]=probsNodes[nodes[i]]
@@ -40,21 +41,25 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
                 mat[i][j]=probsEdges[(nodes[i],nodes[j])]
     
     for x in range(len(nodes)):
-        cx=0
+        cx=False
         cv=[]
         for y in range(len(nodes)):
             if mat[y,x] !=0 and x>y:
-                cx=1
+                cx=True
                 cv.append(y)
-        if cx==0:
+        if cx==False:
+            # This risk item is not triggered by transitions. Just put an uncontrolled gate in for it.
             qc.u(2*math.asin(math.sqrt(mat[x,x])),0,0,qr[x])
         else:
-            if len(cv)>1: # this RI is triggered by more than one other RI. The triggering RI are in the list "cv"
-                print("NOTE: Item",x,"is triggered by more than one other RI!")
+            if len(cv)>1: 
+                # This risk item is triggered by more than one other risk item. The triggering risk item are in the list "cv"
+                print("NOTE: Risk item",x,"is triggered by more than one other risk item.")
                 controllist=[]
                 for i in range(len(cv)):
                     controllist.append(qr[cv[i]])
                 controllist.append(qr[y])
+                # Here we can insert a loop that goes through all 2**len(cv) combinations of possibilities to control 
+                # the risk item and calculate the probability and put in a multiply controlled U3-gate.
                 for i in range(2**len(cv)):
                     cts = format(i, "0"+str(len(cv))+"b")
                     if i==0:
@@ -62,17 +67,15 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
                     else:
                         p=1
                         pbef=0
-                        print("ITEM:")
                         for j in range(len(cv)):
                             if cts[j]=="1":
                                 p=p*(1-pbef)*mat[j,y]
                                 pbef=mat[j,y]
-
                     qc.append(U3Gate(2*math.asin(math.sqrt(p)),0,0).control(num_ctrl_qubits=len(cv),ctrl_state=cts),controllist)
-    # Here we can insert a loop that goes through all 2**len(cv) combinations of possibilities to control the RI and calculate the probability and put in a multiply controlled U3-gate 
-            if len(cv)==0:
-                print("there's an empty risk item ...???")
+            elif len(cv)==0:
+                print("Note: There is an empty risk item.")
             else:
+                # This risk item is triggered by one risk item.
                 qc.append(U3Gate(2*math.asin(math.sqrt(mat[x,x])),0,0).control(num_ctrl_qubits=1,ctrl_state='0'),[qr[cv[0]],qr[x]])
                 ptrig = mat[cv[0],x] + (1-mat[cv[0],x])*mat[x,x]
                 qc.append(U3Gate(2*math.asin(math.sqrt(ptrig)),0,0).control(num_ctrl_qubits=1,ctrl_state='1'),[qr[cv[0]],qr[x]])
@@ -81,8 +84,7 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
         gate=qc.to_gate()
         gate.label="BRM"
         return gate, mat
-    
-    if model2gate==False:
+    else:
         return qc, mat
 
 def findAllParents(edges, currentNode):
