@@ -80,10 +80,10 @@ def evaluateDifferenceRandomRiskModel(numberNodes):
 #
 # Run the check for 200 random risk models with 4 nodes.
 #
-# numberQubits=4
-# print("processing qubits: ",numberQubits)
+# numberNodes=4
+# print("processing risk model with #nodes=",numberNodes)
 # for i in range(200):
-#     buffer=evaluateDifferenceRandomRiskModel(numberQubits)
+#     buffer=evaluateDifferenceRandomRiskModel(numberNodes)
 #     if buffer>0.00001:
 #         print("Error! Deviation is", buffer)
 #
