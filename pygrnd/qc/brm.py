@@ -15,6 +15,7 @@ limitations under the License.'''
 import math
 import numpy as np
 import qiskit
+import random
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library.standard_gates import U3Gate
 
