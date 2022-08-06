@@ -201,3 +201,63 @@ def modelProbabilities(nodes, edges, probsNodes, probsEdges, checkGraph=False):
         
     return states, summe
 
+def processNodesMonteCarlo(nodes, edges, probsNodes, probsEdges, configSoFar):
+    ''' Find all nodes without unprocessed predecessors. Then process
+        these nodes and proceed recursively. This is used for one run
+        of the risk model with Monte Carlo.
+    '''
+
+    # All nodes are already processed.
+    if len(configSoFar)==len(nodes):
+        return configSoFar
+
+    # Find unprocessed nodes without unprocessed predecessors.
+    candidates=[]
+    for n in nodes:
+        if not (n in configSoFar):
+            onlyProcessedPrecedessors=True
+            for e in edges:
+                if (e[1]==n) and not(e[0] in configSoFar):
+                    onlyProcessedPrecedessors=False
+            if onlyProcessedPrecedessors:
+                candidates.append(n)
+
+    # Process all candidates.
+    for c in candidates:
+        active=0
+        if random.random()<probsNodes[c]:
+            active=1
+        for e in edges:
+            if e[1]==c:
+                if configSoFar[e[0]]==1:
+                    if random.random()<probsEdges[e]:
+                        active=1
+        configSoFar[c]=active
+
+    return processNodesMonteCarlo(nodes, edges, probsNodes, probsEdges, configSoFar)
+
+def getRandomConfigurationMonteCarlo(nodes, edges, probsNodes, probsEdges):
+    ''' Calculate a valid configuration of the nodes of the risk model according
+        to the given probabilities. Return the binary string of the configuration.
+        Note that the order is reversed to be consistent with Qiskits qubit order.
+    '''
+    config=processNodesMonteCarlo(nodes, edges, probsNodes, probsEdges,{})
+    string=''
+    for n in nodes[::-1]:
+        string=string+str(config[n])
+    return string
+
+def evaluateRiskModelMonteCarlo(nodes, edges, probsNodes, probsEdges, rounds):
+    ''' Evaluate the risk model with the Monte Carlo method many times and
+        return a dictionary of the counts of all calculated configurations.
+        Note that the order is reversed to be consistent with Qiskits qubit order.
+    '''
+    result={}
+    for i in range(rounds):
+        string=getRandomConfigurationMonteCarlo(nodes, edges, probsNodes, probsEdges)
+        if string in result:
+            result[string]=result[string]+1
+        else:
+            result[string]=1
+    return result
+
