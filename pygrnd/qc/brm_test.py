@@ -53,7 +53,7 @@ def randomRiskModel(numberNodes):
 
 def evaluateDifferenceRandomRiskModel(numberNodes):
     '''Generate a random business risk model and compare the probabilities from
-       the classical evaluation with the result of the statevector simulation.
+       the exact classical evaluation with the result of the statevector simulation.
     '''
     
     # Get random model.
@@ -87,3 +87,41 @@ def evaluateDifferenceRandomRiskModel(numberNodes):
 #     if buffer>0.00001:
 #         print("Error! Deviation is", buffer)
 #
+
+def evaluateDifferenceRandomRiskModelMonteCarlo(numberNodes, roundsMonteCarlo):
+    '''Generate a random business risk model and compare the probabilities from
+       the exact classical evaluation with the result of a Monte Carlo simulation
+       with the given number of rounds.
+    '''
+    # Get a random model.
+    nodes, edges, probsNodes, probsEdges=randomRiskModel(numberNodes)
+
+    # Calculate exact solution.
+    probs, sumProbs = modelProbabilities(nodes,edges,probsNodes,probsEdges)
+    probsExact={}
+    for i in range(len(probs)):
+        probsExact[format(i, "0"+str(len(nodes))+"b")]=probs[i]
+
+    # Monte Carlo simulation
+    result=evaluateRiskModelMonteCarlo(nodes, edges, probsNodes, probsEdges, roundsMonteCarlo)
+
+    probsMonte={}
+    for i in range(2**len(nodes)):
+            cts=format(i, "0"+str(len(nodes))+"b")
+            if cts in result:
+                probsMonte[cts]=result[cts]/roundsMonteCarlo
+
+    return calculateDiffProbabilities(probsExact, probsMonte)
+
+#
+# Run the check for 200 random risk models with 2 nodes. Some of the Monte Carlo
+# simulations might have a difference that is bigger than 0.1.
+#
+# numberNodes=2
+# roundsMonteCarlo=1000
+# for i in range(200):
+#     diff=evaluateDifferenceRandomRiskModelMonteCarlo(numberNodes, roundsMonteCarlo)
+#     if diff>0.1:
+#         print("diff is",diff)
+
+
