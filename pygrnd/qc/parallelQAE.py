@@ -22,7 +22,9 @@ import math, cmath, random
 import numpy as np
 from math import pi
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, execute, Aer
-from qiskit.circuit.library import QFT, HGate, XGate, UGate, SGate, ZGate
+from qiskit.circuit.library import QFT, HGate, XGate, UGate, SGate, ZGate, IGate
+from qiskit.circuit.random import random_circuit
+import itertools
 
 #
 # Turn a number into binary string representation with b bits.
@@ -448,3 +450,60 @@ def circuitStandardParallelQAEwithResets(eigenstatePreparation, groverOperator, 
 
     return qc
 
+
+def findSuitableModel(qubits, minProb, maxProb, numberStates):
+    """ Return a random circuit and a list of states. The states
+        have together a probability between minProb and maxProb.
+        The number of states can be predefined.
+    """
+    numberShots=10000
+    foundGoodStates=False
+    goodStates=0
+    goodModel=0
+
+    while not(foundGoodStates):
+        qc = random_circuit(qubits, qubits+5, measure=False)
+
+        # Remove id gates as they are useless and the controlled 
+        # version does not work. This would lead to problems when 
+        # creating the controlled Grover gate.
+        qr=qc.qubits
+        qc2=QuantumCircuit(qr)
+        for gate in qc:
+            if not(gate[0]==IGate()):
+                qc2.append(gate[0],gate[1])
+        modelGate=qc2.to_gate()
+        modelGate.label='m'
+
+        qr=QuantumRegister(qubits,'q')
+        cr=ClassicalRegister(qubits,'c')
+        qc=QuantumCircuit(qr,cr)
+        qc.append(modelGate,qr)
+        qc.measure(qr,cr)
+        backend = Aer.get_backend('qasm_simulator')
+
+        job = execute(qc, backend, shots=numberShots)
+        result=job.result()
+        counts=result.get_counts()
+        
+        # Check all subsets of size numberStates of possible combinations of results
+        # if we land in the desired region. Each relevant state should have at least 1
+        # hit to be relevant.
+        binaryWords=allBits(qubits)
+        
+        for combi in itertools.combinations(binaryWords, numberStates):
+            buffer=0
+            allStatesPopulated=True
+            for c in combi:
+                if c in counts:
+                    buffer=buffer+counts[c]/numberShots
+                else:
+                    allStatesPopulated=False
+
+            if buffer>minProb and buffer<maxProb and allStatesPopulated==True and len(counts)>(2**qubits-2):
+                foundGoodStates=True
+                goodStates=list(combi)
+                goodModel=modelGate
+                break
+
+    return goodModel, goodStates
