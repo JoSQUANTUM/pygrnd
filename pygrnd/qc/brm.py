@@ -36,15 +36,34 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     for i in range(len(nodes)):
         mat[i][i]=probsNodes[nodes[i]]
     for i in range(len(nodes)):
-        for j in range(i+1,len(nodes)):
+        for j in range(len(nodes)):
             if (nodes[i],nodes[j]) in probsEdges:
                 mat[i][j]=probsEdges[(nodes[i],nodes[j])]
     
-    for target in range(len(nodes)):
+    # Main processing loop.
+    indicesProcessed=[]
+    while len(indicesProcessed)<len(nodes):
+        # Find the first unprocessed node that has no unprocessed parents.
+        target=None
+        for i in range(len(nodes)):
+            allParentsAlreadyProcessed=True
+            for j in range(len(nodes)):
+                if not(i==j) and (mat[j][i]!=0) and not(j in indicesProcessed):
+                    allParentsAlreadyProcessed=False
+            if not(i in indicesProcessed) and allParentsAlreadyProcessed==True:
+                target=i
+                break
+        indicesProcessed.append(target)
+        
+        # We might have a cycle.
+        if target==None:
+            print("Internal error. Please check the nodes and edges.")
+            return qc, mat
+        
         foundControllers=False
         collectedControllerIndices=[]
         for y in range(len(nodes)):
-            if mat[y,target] !=0 and target>y:
+            if mat[y,target] !=0 and not(y==target):
                 foundControllers=True
                 collectedControllerIndices.append(y)
         
