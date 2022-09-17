@@ -164,7 +164,7 @@ def appendDependentNode(qt, qr, qc, mat, mat2, target, collectedControllerIndice
             pTargetOff3=1-mat2[target,target]
             for j in range(len(collectedControllerIndices)):
                 if cts[j]=="1":
-                    pTargetOff3=pTargetOff*(1-mat[collectedControllerIndices[j],target])
+                    pTargetOff3=pTargetOff3*(1-mat[collectedControllerIndices[j],target])
             newValue=2*math.asin(math.sqrt(1-pTargetOff3))-2*math.asin(math.sqrt(1-pTargetOff))
             nodeString=nodeMapping[(nodes[target])]
             qc.append(U3Gate(newValue,0,0).control(num_ctrl_qubits=len(collectedControllerIndices)+necessaryBits,ctrl_state=cts[::-1]+nodeString),list(qt)+controllist)
@@ -373,7 +373,7 @@ def modelProbabilities(nodes, edges, probsNodes, probsEdges, checkGraph=False):
        edges = [ ('0','1'), ('1','2'), ('2','3')]
        probsNodes = {'0':0.1, '1':0.2, '2':0.1, '3':0.0}
        probsEdges = {('0','1'):0.1, ('1','2'):0.2, ('2','3'):0.1}
-       modelProbabilities(nodes, edges, probsNodes, probsEdges, checkGraph=True)        
+       modelProbabilities(nodes, edges, probsNodes, probsEdges, checkGraph=True)
     """
     if checkGraph==True:
         checkGraphConsistency(nodes, edges, probsNodes, probsEdges)
