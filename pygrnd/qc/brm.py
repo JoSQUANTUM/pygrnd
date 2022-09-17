@@ -269,7 +269,7 @@ def brmWithModifications(nodes, edges, probsNodes, probsEdges, probsNodesModifie
     if model2gate==True:
         gate=qc.to_gate()
         gate.label="BRM"
-        return gate, mat
+        return gate, mat, nodeMapping, edgeMapping, necessaryBits
     else:
         return qc, mat, nodeMapping, edgeMapping, necessaryBits
 
