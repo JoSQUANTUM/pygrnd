@@ -18,6 +18,7 @@ import qiskit
 import random
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library.standard_gates import U3Gate
+from pygrnd.qc.helper import allCombinations
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     """input:
@@ -100,6 +101,177 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
         return gate, mat
     else:
         return qc, mat
+
+def variationsDictionary(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified):
+    """ We can modify the probabilities of the nodes and the edges. How
+        many different values are there in total for nodes and edges? Return
+        a mapping for the nodes and the edges that can be modified as binary numbers.
+        Keep the combination 0..0 for no modification.
+    """
+    numberDiffs=0
+    for n in nodes:
+        if not(probsNodes[n]==probsNodesModified[n]):
+            numberDiffs=numberDiffs+1
+    for e in edges:
+        if not(probsEdges[e]==probsEdgesModified[e]):
+            numberDiffs=numberDiffs+1
+
+    # Keep 0..0 for 'no modification'
+    if numberDiffs>0:
+        numberDiffs=numberDiffs+1
+
+    necessaryBits=0
+    if numberDiffs>0:
+        necessaryBits=math.ceil(math.log(numberDiffs)/math.log(2))
+    allCombos=allCombinations(necessaryBits)
+
+    nodeMapping={}
+    edgeMapping={}
+    currentPosition=1
+    for n in nodes:
+        if not(probsNodes[n]==probsNodesModified[n]):
+            nodeMapping[n]=allCombos[currentPosition]
+            currentPosition=currentPosition+1
+
+    for e in edges:
+        if not(probsEdges[e]==probsEdgesModified[e]):
+            edgeMapping[e]=allCombos[currentPosition]
+            currentPosition=currentPosition+1
+    return nodeMapping, edgeMapping, necessaryBits
+
+def appendDependentNode(qt, qr, qc, mat, mat2, target, collectedControllerIndices, modifiableEdges, nodes, nodeMapping, edgeMapping, necessaryBits):
+    """ Iterate over all binary configurations of the control qubits
+        and calculate the probability that the target node is not triggered.
+    """
+    controllist=[]
+    for i in range(len(collectedControllerIndices)):
+        controllist.append(qr[collectedControllerIndices[i]])
+    controllist.append(qr[target])
+
+    for i in range(2**len(collectedControllerIndices)):
+        cts = format(i, "0"+str(len(collectedControllerIndices))+"b")
+
+        pTargetOff=1-mat[target,target]
+        for j in range(len(collectedControllerIndices)):
+            if cts[j]=="1":
+                pTargetOff=pTargetOff*(1-mat[collectedControllerIndices[j],target])
+
+        # For this configuration of control qubits, turn the qubit on with
+        # the probability 1-pTargetOff.
+        qc.append(U3Gate(2*math.asin(math.sqrt(1-pTargetOff)),0,0).control(num_ctrl_qubits=len(collectedControllerIndices),ctrl_state=cts[::-1]),controllist)
+
+        if nodes[target] in nodeMapping:
+            pTargetOff3=1-mat2[target,target]
+            for j in range(len(collectedControllerIndices)):
+                if cts[j]=="1":
+                    pTargetOff3=pTargetOff*(1-mat[collectedControllerIndices[j],target])
+            newValue=2*math.asin(math.sqrt(1-pTargetOff3))-2*math.asin(math.sqrt(1-pTargetOff))
+            nodeString=nodeMapping[(nodes[target])]
+            qc.append(U3Gate(newValue,0,0).control(num_ctrl_qubits=len(collectedControllerIndices)+necessaryBits,ctrl_state=cts[::-1]+nodeString),list(qt)+controllist)
+
+        # We need to modify the value if we have a modified edge. Just this edge is different.
+        # And only if the modified edge is active in this configuration.
+        for m in modifiableEdges:
+            if (cts[collectedControllerIndices.index(m[0])]=='1'):
+                pTargetOff2=1-mat[target,target]
+                for j in range(len(collectedControllerIndices)):
+                    if cts[j]=="1":
+                        if not(j==collectedControllerIndices.index(m[0])):
+                            pTargetOff2=pTargetOff2*(1-mat[collectedControllerIndices[j],target])
+                        else:
+                            pTargetOff2=pTargetOff2*(1-mat2[collectedControllerIndices[j],target])
+                    newValue=2*math.asin(math.sqrt(1-pTargetOff2))-2*math.asin(math.sqrt(1-pTargetOff))
+                edgeString=edgeMapping[(nodes[m[0]],nodes[m[1]])]
+                qc.append(U3Gate(newValue,0,0).control(num_ctrl_qubits=len(collectedControllerIndices)+necessaryBits,ctrl_state=cts[::-1]+edgeString),list(qt)+controllist)
+
+def brmWithModifications(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified, model2gate=False):
+    """input:
+         Risk item list e.g.  nodes = ['0','1']
+         Correlation risk e.g. edges=[('0','1')] # correlations
+         probsNodes={'0':0.1,'1':0.1} # intrinsic probs
+         probsEdges={('0','1'):0.2} # transition probs
+         probsNodesModified={'0':0.1,'1':0.1} # intrinsic probs
+         probsEdgesModified={('0','1'):0.2} # transition probs
+         output: Either circuit (model2gate=False) OR gate (model2gate=True) and the
+                 matrix with the probabilities of the nodes and the edges. Also, return
+                 dictionaries along with the number of tuning qubits that determine which
+                 modification of nodes and edges should be turned on.
+    """
+
+    # Consider the variations and the necessary qubits to encode them.
+    nodeMapping, edgeMapping, necessaryBits = variationsDictionary(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified)
+
+    qt=QuantumRegister(necessaryBits,'t') # tuning parameters
+    qr=QuantumRegister(len(nodes),'q')
+    qc=QuantumCircuit(qt,qr)
+
+    # Turn probabilities for nodes and edges into matrix form. Unmodified version.
+    mat=np.zeros((len(nodes),len(nodes)))
+    for i in range(len(nodes)):
+        mat[i][i]=probsNodes[nodes[i]]
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if (nodes[i],nodes[j]) in probsEdges:
+                mat[i][j]=probsEdges[(nodes[i],nodes[j])]
+
+    # Turn probabilities for nodes and edges into matrix form. Modified version.
+    mat2=np.zeros((len(nodes),len(nodes)))
+    for i in range(len(nodes)):
+        mat2[i][i]=probsNodesModified[nodes[i]]
+    for i in range(len(nodes)):
+        for j in range(len(nodes)):
+            if (nodes[i],nodes[j]) in probsEdgesModified:
+                mat2[i][j]=probsEdgesModified[(nodes[i],nodes[j])]
+
+    # Main processing loop.
+    indicesProcessed=[]
+    while len(indicesProcessed)<len(nodes):
+        # Find the first unprocessed node that has no unprocessed parents.
+        target=None
+        for i in range(len(nodes)):
+            allParentsAlreadyProcessed=True
+            for j in range(len(nodes)):
+                if not(i==j) and (mat[j][i]!=0) and not(j in indicesProcessed):
+                    allParentsAlreadyProcessed=False
+            if not(i in indicesProcessed) and allParentsAlreadyProcessed==True:
+                target=i
+                break
+        indicesProcessed.append(target)
+
+        # We might have a cycle.
+        if target==None:
+            print("Internal error. Please check the nodes and edges.")
+            return qc, mat
+
+        foundControllers=False
+        collectedControllerIndices=[]
+        for y in range(len(nodes)):
+            if mat[y,target] !=0 and not(y==target):
+                foundControllers=True
+                collectedControllerIndices.append(y)
+
+        if foundControllers==False:
+            # This risk item is not triggered by transitions. Just put an uncontrolled gate in for it. It can only be controlled by the
+            # modification register.
+            qc.u(2*math.asin(math.sqrt(mat[target,target])),0,0,qr[target])
+            if nodes[target] in nodeMapping:
+                # The probability must be modified if the modification setting is active.
+                newValue=2*math.asin(math.sqrt(mat2[target,target]))-2*math.asin(math.sqrt(mat[target,target]))
+                qc.append(U3Gate(newValue,0,0).control(num_ctrl_qubits=necessaryBits,ctrl_state=nodeMapping[nodes[target]]),qt[:]+[qr[target]])
+        else:
+            # This risk item is triggered by more than one other risk item. The triggering risk item are in the list "collectedControllerIndices"
+            modifiableEdges=[]
+            for source in collectedControllerIndices:
+                if (nodes[source],nodes[target]) in edgeMapping:
+                    modifiableEdges.append((source,target))
+            appendDependentNode(qt, qr, qc, mat, mat2, target, collectedControllerIndices, modifiableEdges, nodes, nodeMapping, edgeMapping, necessaryBits)
+
+    if model2gate==True:
+        gate=qc.to_gate()
+        gate.label="BRM"
+        return gate, mat
+    else:
+        return qc, mat, nodeMapping, edgeMapping, necessaryBits
 
 def findAllParents(edges, currentNode):
     res=[]
