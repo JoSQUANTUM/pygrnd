@@ -26,7 +26,7 @@ def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
          Correlation risk e.g. edges=[('0','1')] # correlations
          probsNodes={'0':0.1,'1':0.1} # intrinsic probs
          probsEdges={('0','1'):0.2} # transition probs
-         output: either circuit (model2gate=False) OR gate (model2gate=True) and the 
+         output: either circuit (model2gate=False) or gate (model2gate=True) and the
                  matrix with the probabilities of the nodes and the edges
     """
     qr=QuantumRegister(len(nodes),'q')
@@ -191,8 +191,8 @@ def brmWithModifications(nodes, edges, probsNodes, probsEdges, probsNodesModifie
          probsNodes={'0':0.1,'1':0.1} # intrinsic probs
          probsEdges={('0','1'):0.2} # transition probs
          probsNodesModified={'0':0.1,'1':0.1} # intrinsic probs
-         probsEdgesModified={('0','1'):0.2} # transition probs
-         output: Either circuit (model2gate=False) OR gate (model2gate=True) and the
+         probsEdgesModified={('0','1'):0.3} # transition probs
+         output: Either circuit (model2gate=False) or gate (model2gate=True) and the
                  matrix with the probabilities of the nodes and the edges. Also, return
                  dictionaries along with the number of tuning qubits that determine which
                  modification of nodes and edges should be turned on.
