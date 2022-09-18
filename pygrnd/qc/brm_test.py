@@ -16,6 +16,7 @@ import random
 import pygrnd
 from qiskit import execute
 from qiskit import Aer
+from qiskit.quantum_info import hellinger_fidelity
 from pygrnd.qc.helper import *
 from pygrnd.qc.brm import *
 from pygrnd.qc.brm_oracle import *
@@ -125,3 +126,72 @@ def evaluateDifferenceRandomRiskModelMonteCarlo(numberNodes, roundsMonteCarlo):
 #         print("diff is",diff)
 
 
+#
+# The following tests are for the Business Risk Models with modification qubits.
+#
+
+def getModelWithSpecificModification(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified, nodeMapping, edgeMapping, necessaryBits, modString):
+        ''' Get the model parameters if we choose the modification
+            that is defined by the modString. The modString should be found in nodeMapping oder edgeMapping.
+        '''
+        nodes2=[]
+        edges2=[]
+        probsNodes2={}
+        probsEdges2={}
+        for n in nodes:
+            nodes2.append(n)
+            if (n in nodeMapping) and (nodeMapping[n]==modString):
+                probsNodes2[n]=probsNodesModified[n]
+            else:
+                probsNodes2[n]=probsNodes[n]
+        for e in edges:
+            edges2.append(e)
+            if (e in edgeMapping) and (edgeMapping[e]==modString):
+                probsEdges2[e]=probsEdgesModified[e]
+            else:
+                probsEdges2[e]=probsEdges[e]
+        return nodes2, edges2, probsNodes2, probsEdges2
+
+def getFidelitiesAllCombinationsTunableModel(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified):
+    """ Take a model with modifications and try out all settings of the modification qubits. Compare
+        it with the normal model without modification qubits that is constructed for each case. Return
+        a dictionary with modification settings and the corresponding hellinger fidelity. This fidelity
+        should be high in all cases. Calculated with 100000 shots.
+    """
+    # Collect all the hellinger fidelities as dictionary.
+    res={}
+    brmMod, mat, nodeMapping, edgeMapping, necessaryBits=brmWithModifications(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified, model2gate=True)
+    modStrings=[]
+    for n in nodeMapping:
+        modStrings.append(nodeMapping[n])
+    for e in edgeMapping:
+        modStrings.append(edgeMapping[e])
+
+    for modString in modStrings:
+        # Run the modified circuit with appropriate setting of the tuning qubits.
+        qt=QuantumRegister(necessaryBits,'t')
+        qr=QuantumRegister(len(nodes),'q')
+        cr=ClassicalRegister(len(nodes),'c')
+        qc=QuantumCircuit(qt,qr,cr)
+        for i in range(len(modString)):
+            if modString[::-1][i]=='1':
+                qc.x(qt[i])
+        qc.append(brmMod,list(qt)+list(qr))
+        qc.measure(qr,cr)
+        backend_qasm=Aer.get_backend("qasm_simulator")
+        job=execute(qc,backend=backend_qasm,shots=100000)
+        countsMod=job.result().get_counts()
+
+        # Run the normal circuit when the probs are filtered classically in advance.
+        nodes2, edges2, probsNodes2, probsEdges2=getModelWithSpecificModification(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified, nodeMapping, edgeMapping, necessaryBits, modString)
+        brmClassic,mat=brm(nodes2, edges2, probsNodes2, probsEdges2, model2gate=True)
+        qr=QuantumRegister(len(nodes),'q')
+        cr=ClassicalRegister(len(nodes),'c')
+        qc=QuantumCircuit(qr,cr)
+        qc.append(brmClassic,qr)
+        qc.measure(qr,cr)
+        backend_qasm=Aer.get_backend("qasm_simulator")
+        job=execute(qc,backend=backend_qasm,shots=100000)
+        countsClassic=job.result().get_counts()
+        res[modString]=hellinger_fidelity(countsMod,countsClassic)
+    return res
