@@ -195,3 +195,21 @@ def getFidelitiesAllCombinationsTunableModel(nodes, edges, probsNodes, probsEdge
         countsClassic=job.result().get_counts()
         res[modString]=hellinger_fidelity(countsMod,countsClassic)
     return res
+
+#
+# Generate a series of random risk models with randomly modified probabilities. Compare
+# all possible modifications of such a model with the modified normal risk model
+# without tuning qubits and report the minimum fidelity of all modifications.
+#
+#
+# numNodes=3
+# for i in range(10):
+#     nodes, edges, probsNodes, probsEdges = randomRiskModel(numNodes)
+#     nodes2, edges2, probsNodesModified, probsEdgesModified = randomRiskModel(numNodes)
+#     brmMod, mat, nodeMapping, edgeMapping, necessaryBits=brmWithModifications(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified, model2gate=True)
+#     hellinger_fids=getFidelitiesAllCombinationsTunableModel(nodes, edges, probsNodes, probsEdges, probsNodesModified, probsEdgesModified)
+#     minFid=1.0
+#     for h in hellinger_fids:
+#         #print(h,"->",hellinger_fids[h])
+#         minFid=min(minFid,hellinger_fids[h])
+#     print("minimum fidelity:",minFid)
