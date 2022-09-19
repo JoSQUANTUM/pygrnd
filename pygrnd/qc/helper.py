@@ -80,7 +80,7 @@ def addPower2(qr, qc, power, qubits):
         else:
             qc.append(XGate().control(num_ctrl_qubits=len(controls)-1),controls)
 
-def adderValue(qr,qc,value):
+def addValue(qr,qc,value):
     """ Add the gates on the register that correspond to the addition of value.
     """
     bits=num2bin(value,len(qr))
@@ -89,3 +89,25 @@ def adderValue(qr,qc,value):
         if x=='1':
             addPower2(qr, qc, power, len(qr))
         power=power+1
+
+def subtractPower2(qr, qc, power, qubits):
+    """ Add the gates on the register that correspond to the subtraction of 2^power.
+    """
+    for i in range(power,qubits):
+        controls=[qr[j] for j in range(power,i+1)]
+        if len(controls)==1:
+            qc.x(controls)
+        else:
+            qc.append(XGate().control(num_ctrl_qubits=len(controls)-1),controls)
+
+def subtractValue(qr,qc,value):
+    """ Add the gates on the register that correspond to the subtraction of
+        the specified value.
+    """
+    bits=num2bin(value,len(qr))
+    power=0
+    for x in bits[::-1]:
+        if x=='1':
+            subtractPower2(qr, qc, power, len(qr))
+        power=power+1
+
