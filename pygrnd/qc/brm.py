@@ -17,8 +17,8 @@ import numpy as np
 import qiskit
 import random
 from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.circuit.library.standard_gates import U3Gate
-from pygrnd.qc.helper import allCombinations, adderValue, addPower2
+from qiskit.circuit.library.standard_gates import U3Gate, XGate
+from pygrnd.qc.helper import allCombinations, addValue, addPower2, subtractValue, subtractPower2
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     """input:
@@ -470,7 +470,7 @@ def addCostsToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, sizeCostRegi
     for i in range(len(nodes)):
         qrTemp=QuantumRegister(sizeCostRegister)
         qcTemp=QuantumCircuit(qrTemp)
-        adderValue(qrTemp,qcTemp,costsNodes[nodes[i]])
+        addValue(qrTemp,qcTemp,costsNodes[nodes[i]])
         gateTemp=qcTemp.to_gate()
         riskModelCircuit.append(gateTemp.control(),[nodeRegister[i]]+list(costRegister))
 
