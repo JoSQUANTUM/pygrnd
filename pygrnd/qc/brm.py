@@ -18,7 +18,7 @@ import qiskit
 import random
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library.standard_gates import U3Gate
-from pygrnd.qc.helper import allCombinations
+from pygrnd.qc.helper import allCombinations, adderValue, addPower2
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     """input:

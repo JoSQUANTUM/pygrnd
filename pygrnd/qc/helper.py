@@ -14,6 +14,7 @@ limitations under the License.'''
 
 import numpy as np
 import math
+from qiskit.circuit.library import XGate
 
 def num2bin(x,r):
     res=""
@@ -69,7 +70,7 @@ def showQAEoutput(counts,STATELIST,QAEqubits):
     print("The probability of the tail event ",STATELIST," is: ",probTail)
     return probTail
 
-def addPower2(qr, qc, power):
+def addPower2(qr, qc, power, qubits):
     """ Add the gates on the register that correspond to the addition of 2^power.
     """
     for i in range(power,qubits)[::-1]:
@@ -86,5 +87,5 @@ def adderValue(qr,qc,value):
     power=0
     for x in bits[::-1]:
         if x=='1':
-            addPower2(qr,qc,power)
+            addPower2(qr, qc, power, len(qr))
         power=power+1
