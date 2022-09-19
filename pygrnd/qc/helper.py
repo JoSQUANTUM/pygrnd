@@ -68,3 +68,23 @@ def showQAEoutput(counts,STATELIST,QAEqubits):
     probTail=math.sin(bin2num(maxString(counts))*math.pi/(2**QAEqubits))**2
     print("The probability of the tail event ",STATELIST," is: ",probTail)
     return probTail
+
+def addPower2(qr, qc, power):
+    """ Add the gates on the register that correspond to the addition of 2^power.
+    """
+    for i in range(power,qubits)[::-1]:
+        controls=[qr[j] for j in range(power,i+1)]
+        if len(controls)==1:
+            qc.x(controls)
+        else:
+            qc.append(XGate().control(num_ctrl_qubits=len(controls)-1),controls)
+
+def adderValue(qr,qc,value):
+    """ Add the gates on the register that correspond to the addition of value.
+    """
+    bits=num2bin(value,len(qr))
+    power=0
+    for x in bits[::-1]:
+        if x=='1':
+            addPower2(qr,qc,power)
+        power=power+1
