@@ -474,4 +474,18 @@ def addCostsToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, sizeCostRegi
         gateTemp=qcTemp.to_gate()
         riskModelCircuit.append(gateTemp.control(),[nodeRegister[i]]+list(costRegister))
 
+def addCostsAndLimitToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, limit):
+    """ Add the summation of the costs to a risk model. Subtract the
+        limit and set a indicator qubit when a configuration of the
+        risk model results in costs that are equal or above the limit.
+    """
+    maxCosts=sum([costsNodes[x] for x in costsNodes])
+    sizeCostRegister=math.ceil(math.log(maxCosts)/math.log(2))+1
+    addCostsToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, sizeCostRegister)
+    costRegister=riskModelCircuit.qubits[-sizeCostRegister:]
+    subtractValue(costRegister,riskModelCircuit,limit)
+    limitQubit=QuantumRegister(1,"limit")
+    riskModelCircuit.add_register(limitQubit)
+    riskModelCircuit.append(XGate().control(num_ctrl_qubits=1,ctrl_state='0'),[costRegister[-1],limitQubit[0]])
+
 
