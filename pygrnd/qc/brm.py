@@ -17,7 +17,7 @@ import numpy as np
 import qiskit
 import random
 from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.circuit.library.standard_gates import U3Gate, XGate
+from qiskit.circuit.library.standard_gates import U3Gate, XGate, ZGate
 from pygrnd.qc.helper import allCombinations, addValue, addPower2, subtractValue, subtractPower2
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
@@ -488,4 +488,37 @@ def addCostsAndLimitToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, limi
     riskModelCircuit.add_register(limitQubit)
     riskModelCircuit.append(XGate().control(num_ctrl_qubits=1,ctrl_state='0'),[costRegister[-1],limitQubit[0]])
 
+def constructGroverOperatorForRiskModelWithLimit(riskModel):
+    """ The input is a risk model with cost register and indicator
+        qubit at the end that shows that the limit is reached. This
+        method constructs a Grover operator for the states that are
+        equal or above the limit.
+    """
+    numberQubits=riskModel.num_qubits
+    qr=QuantumRegister(numberQubits,'q')
+    qc=QuantumCircuit(qr)
+
+    # mark the state as good if the last qubit is active
+    qc.z(qr[-1])
+
+    # Inverse operation
+    qc.append(riskModel.inverse(),qr)
+
+    # Mark 0 with -1, include scalar -1 in front of formula
+    qc.x(qr[0])
+    qc.z(qr[0])
+    qc.x(qr[0])
+    qc.z(qr[0])
+    qc.x(qr[0])
+    qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state='0'*(numberQubits-1)),qr[1:]+[qr[0]])
+    qc.x(qr[0])
+
+    # Normal operation
+    qc.append(riskModel,qr)
+
+    #display(qc.draw(output='mpl'))
+    grover=qc.to_gate()
+    grover.label="Grover"
+
+    return grover
 
