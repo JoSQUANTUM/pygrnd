@@ -453,3 +453,25 @@ def evaluateRiskModelMonteCarlo(nodes, edges, probsNodes, probsEdges, rounds):
             result[string]=1
     return result
 
+def addCostsToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, sizeCostRegister):
+    """ Add a cost register to a risk model circuit. The circuit might have tuning qubits.
+        Also add the gates to sum up the costs of risk items that are active at the end.
+    """
+    # Sort out classical registers. Assume that the last len(nodes) qubits are
+    # the qubits representing the risk items.
+    quantumRegisters=[]
+    for x in riskModelCircuit.qubits:
+        if type(x)==QuantumRegister:
+            quantumRegisters.append(x)
+    nodeRegister=riskModelCircuit.qubits[-len(nodes):]
+    # Add a register for the costs and add the controlled adders.
+    costRegister=QuantumRegister(sizeCostRegister,'costs')
+    riskModelCircuit.add_register(costRegister)
+    for i in range(len(nodes)):
+        qrTemp=QuantumRegister(sizeCostRegister)
+        qcTemp=QuantumCircuit(qrTemp)
+        adderValue(qrTemp,qcTemp,costsNodes[nodes[i]])
+        gateTemp=qcTemp.to_gate()
+        riskModelCircuit.append(gateTemp.control(),[nodeRegister[i]]+list(costRegister))
+
+
