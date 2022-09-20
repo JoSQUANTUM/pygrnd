@@ -488,9 +488,10 @@ def addCostsAndLimitToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, limi
     riskModelCircuit.add_register(limitQubit)
     riskModelCircuit.append(XGate().control(num_ctrl_qubits=1,ctrl_state='0'),[costRegister[-1],limitQubit[0]])
 
-def constructGroverOperatorForRiskModelWithLimit(riskModel):
+def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
     """ The input is a risk model with cost register and indicator
-        qubit at the end that shows that the limit is reached. This
+        qubit at the end that shows that the limit is reached. The value of necessaryBits
+        shows the size of the register for the tuning qubits of the model. This
         method constructs a Grover operator for the states that are
         equal or above the limit.
     """
@@ -505,13 +506,13 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel):
     qc.append(riskModel.inverse(),qr)
 
     # Mark 0 with -1, include scalar -1 in front of formula
-    qc.x(qr[0])
-    qc.z(qr[0])
-    qc.x(qr[0])
-    qc.z(qr[0])
-    qc.x(qr[0])
-    qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state='0'*(numberQubits-1)),qr[1:]+[qr[0]])
-    qc.x(qr[0])
+    qc.x(qr[necessaryBits])
+    qc.z(qr[necessaryBits])
+    qc.x(qr[necessaryBits])
+    qc.z(qr[necessaryBits])
+    qc.x(qr[necessaryBits])
+    qc.append(ZGate().control(num_ctrl_qubits=numberQubits-necessaryBits-1,ctrl_state='0'*(numberQubits-necessaryBits-1)),qr[necessaryBits+1:]+[qr[necessaryBits]])
+    qc.x(qr[necessaryBits])
 
     # Normal operation
     qc.append(riskModel,qr)
