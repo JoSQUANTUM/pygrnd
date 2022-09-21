@@ -120,3 +120,21 @@ def complementBitstring(x):
     yDec=2**len(x)-xDec
     yBin=num2bin(yDec,len(x))
     return yBin
+
+def getBitStringsForClosestBin(targetProb, bits):
+    """ We have a target probability and this methods returns
+        the binary encodings (results of measurements after QAE)
+        of the bins that correspond closest to the target probability.
+    """
+    allCombos=allBits(bits)
+    currentBest=allCombos[0]
+    currentDiff=abs(bit2prob(allCombos[0])-targetProb)
+    for x in allCombos:
+        if abs(bit2prob(x)-targetProb)<currentDiff:
+            currentBest=x
+            currentDiff=abs(bit2prob(x)-targetProb)
+    res=[currentBest]
+    y=complementBitstring(currentBest)
+    if not(y in res):
+        res.append(y)
+    return res
