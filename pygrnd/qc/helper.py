@@ -111,3 +111,12 @@ def subtractValue(qr,qc,value):
             subtractPower2(qr, qc, power, len(qr))
         power=power+1
 
+def complementBitstring(x):
+    """ For a bitstring that corresponds to a bin of QAE return
+        the other bitstring with the same probability. It might
+        be the same if there is only one.
+    """
+    xDec=bin2num(x)
+    yDec=2**len(x)-xDec
+    yBin=num2bin(yDec,len(x))
+    return yBin
