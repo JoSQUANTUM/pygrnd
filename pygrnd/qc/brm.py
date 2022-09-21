@@ -15,10 +15,14 @@ limitations under the License.'''
 import math
 import numpy as np
 import qiskit
+from qiskit import Aer, execute
 import random
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library.standard_gates import U3Gate, XGate, ZGate
-from pygrnd.qc.helper import allCombinations, addValue, addPower2, subtractValue, subtractPower2
+from pygrnd.qc.helper import allCombinations, addValue, addPower2, subtractValue, subtractPower2,getMinusMarkerGate
+from pygrnd.qc.parallelQAE import getBitStringsForClosestBin
+from qiskit.extensions import UnitaryGate
+from qiskit.circuit.library import QFT
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     """input:
@@ -523,3 +527,119 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
 
     return grover
 
+def getUnitaryOfControlledGrover(numQubits, grover):
+    """ Turn the Grover operator in a controlled version
+        and use numpy arrays in order to improve
+        performance significantly.
+    """
+    qr=QuantumRegister(numQubits+1)
+    qc=QuantumCircuit(qr)
+    qc.append(grover.control(),qr)
+    backend = Aer.get_backend('unitary_simulator')
+    job = execute(qc, backend)
+    return job.result().get_unitary()
+
+def circuitStandardQAEUnitary(eigenstatePreparation, controlledGroverU, precision):
+    """ Construct the standard QAE circuit with the specified precision. The eigenstate
+        preparion must have the same number of qubits as the Grover operator. The Grover
+        operator should be a unitary matrix in numpy array format. This improves the
+        performance.
+    """
+    numberQubitsEP=eigenstatePreparation.num_qubits
+    numberAllQubits=numberQubitsEP+precision
+
+    qr=QuantumRegister(numberAllQubits,"qr")
+    qc=QuantumCircuit(qr)
+
+    qc.append(eigenstatePreparation,qr[numberAllQubits-numberQubitsEP:])
+
+    for i in range(precision):
+        qc.h(qr[precision-i-1])
+        groverPower=np.linalg.matrix_power(controlledGroverU,2**i)
+        qc.append(UnitaryGate(groverPower),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsEP:])
+    qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
+
+    return qc
+
+def unitariesOfStandardQAEUnitary(eigenstatePreparation, grover, precision):
+    """ Construct the standard QAE circuit with the specified precision. The eigenstate
+        preparion must have the same number of qubits as the Grover operator. The output
+        are two unitaries that are the QAE circuit and its inverse in numpy matrix format.
+        This improves the performance.
+    """
+
+    numQubits=eigenstatePreparation.num_qubits
+    qr=QuantumRegister(numQubits+1)
+    qc=QuantumCircuit(qr)
+    qc.append(grover.control(),qr)
+    backend = Aer.get_backend('unitary_simulator')
+    job = execute(qc, backend)
+    controlledGroverU=job.result().get_unitary()
+
+
+    numberQubitsEP=eigenstatePreparation.num_qubits
+    numberAllQubits=numberQubitsEP+precision
+
+    qr=QuantumRegister(numberAllQubits,"qr")
+    qc=QuantumCircuit(qr)
+
+    qc.append(eigenstatePreparation,qr[numberAllQubits-numberQubitsEP:])
+
+    for i in range(precision):
+        qc.h(qr[precision-i-1])
+        groverPower=np.linalg.matrix_power(controlledGroverU,2**i)
+        qc.append(UnitaryGate(groverPower),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsEP:])
+    qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
+
+
+    backend = Aer.get_backend('unitary_simulator')
+    job = execute(qc, backend)
+    unitaryQAE=job.result().get_unitary()
+    unitaryQAEinv=np.linalg.inv(unitaryQAE)
+
+    return unitaryQAE,unitaryQAEinv
+
+def getGroverOracleFromQAEoracle(numQubitsOracle, unitaryQAE, unitaryQAEinv, resolution, targetProb):
+    """ Create the a Grover type oracle from the QAE with a chosen target probability.
+        The bins that correspond to the probability closest to the target are chosen
+        and used to introduce a phase of -1. The first qubit is added for the
+        generation of the phase.
+    """
+
+    bins=getBitStringsForClosestBin(targetProb, resolution)
+
+    qr=QuantumRegister(numQubitsOracle+1,'q')
+    qc=QuantumCircuit(qr)
+    qc.x(qr[0])
+    qc.append(UnitaryGate(unitaryQAE),qr[1:])
+
+    for c in bins:
+        qc.append(ZGate().control(num_ctrl_qubits=resolution,ctrl_state=c),qr[1:resolution+1]+[qr[0]])
+
+    qc.append(UnitaryGate(unitaryQAEinv),qr[1:])
+    qc.x(qr[0])
+    return qc
+
+def circuitGroverOverQAE(iterations, numQubits, unitaryQAE, unitaryQAEinv, resolution, requiredQubits, targetProb):
+
+    qc=getGroverOracleFromQAEoracle(numQubits, unitaryQAE, unitaryQAEinv, resolution, targetProb)
+    sandwich=qc.to_gate()
+
+    minus=getMinusMarkerGate(requiredQubits)
+
+    qr=QuantumRegister(numQubits+1,'q')
+    cr=ClassicalRegister(requiredQubits,'c')
+    qc=QuantumCircuit(qr,cr)
+    for i in range(requiredQubits):
+        qc.h(qr[1+resolution+i])
+
+    for j in range(iterations):
+        qc.append(sandwich,qr)
+        for i in range(requiredQubits):
+            qc.h(qr[1+resolution+i])
+        qc.append(minus,qr[1+resolution:1+resolution+requiredQubits])
+        for i in range(requiredQubits):
+            qc.h(qr[1+resolution+i])
+
+    qc.measure(qr[1+resolution:1+resolution+requiredQubits],cr)
+    return qc
