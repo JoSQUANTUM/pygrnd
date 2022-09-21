@@ -138,3 +138,16 @@ def getBitStringsForClosestBin(targetProb, bits):
     if not(y in res):
         res.append(y)
     return res
+
+def getMinusMarkerGate(qubits):
+    """ Get the phase gate of the Grover operator that
+        marks all states with -1 except for the 0..0 state.
+    """
+    qr=QuantumRegister(qubits,'q')
+    qc=QuantumCircuit(qr)
+    qc.x(qr[0])
+    qc.append(ZGate().control(num_ctrl_qubits=qubits-1,ctrl_state='0'*(qubits-1)),qr[1:]+[qr[0]])
+    qc.x(qr[0])
+    phaseGate=qc.to_gate()
+    phaseGate.label='ph'
+    return phaseGate
