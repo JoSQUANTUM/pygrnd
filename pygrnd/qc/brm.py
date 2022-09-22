@@ -492,13 +492,15 @@ def addCostsAndLimitToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, limi
     riskModelCircuit.add_register(limitQubit)
     riskModelCircuit.append(XGate().control(num_ctrl_qubits=1,ctrl_state='0'),[costRegister[-1],limitQubit[0]])
 
-def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits, showCircuit=False):
+def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
     """ The input is a risk model with cost register and indicator
         qubit at the end that shows that the limit is reached. The value of necessaryBits
         shows the size of the register for the tuning qubits of the model. This
         method constructs a Grover operator for the states that are
         equal or above the limit.
     """
+    riskModelGate=riskModel.to_gate()
+
     numberQubits=riskModel.num_qubits
     qr=QuantumRegister(numberQubits,'q')
     qc=QuantumCircuit(qr)
@@ -507,7 +509,7 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits, showC
     qc.z(qr[-1])
 
     # Inverse operation
-    qc.append(riskModel.inverse(),qr)
+    qc.append(riskModelGate.inverse(),qr)
 
     # Mark 0 with -1, include scalar -1 in front of formula
     qc.x(qr[necessaryBits])
@@ -519,15 +521,9 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits, showC
     qc.x(qr[necessaryBits])
 
     # Normal operation
-    qc.append(riskModel,qr)
+    qc.append(riskModelGate,qr)
 
-    if showCircuit:
-        display(qc.draw(output='mpl'))
-
-    grover=qc.to_gate()
-    grover.label="Grover"
-
-    return grover
+    return qc
 
 def getUnitaryOfControlledGrover(numQubits, grover):
     """ Turn the Grover operator in a controlled version
@@ -541,12 +537,14 @@ def getUnitaryOfControlledGrover(numQubits, grover):
     job = execute(qc, backend)
     return job.result().get_unitary()
 
-def circuitStandardQAEUnitary(eigenstatePreparation, controlledGroverU, precision):
+def standardQAEunitary(eigenstatePreparation, grover, precision):
     """ Construct the standard QAE circuit with the specified precision. The eigenstate
-        preparion must have the same number of qubits as the Grover operator. The Grover
-        operator should be a unitary matrix in numpy array format. This improves the
-        performance.
+        preparion must have the same number of qubits as the Grover operator.
     """
+
+    numQubits=eigenstatePreparation.num_qubits
+    controlledGroverU=getUnitaryOfControlledGrover(numQubits, grover)
+
     numberQubitsEP=eigenstatePreparation.num_qubits
     numberAllQubits=numberQubitsEP+precision
 
@@ -563,47 +561,7 @@ def circuitStandardQAEUnitary(eigenstatePreparation, controlledGroverU, precisio
 
     return qc
 
-def unitariesOfStandardQAEUnitary(eigenstatePreparation, grover, precision, showCircuit=False):
-    """ Construct the standard QAE circuit with the specified precision. The eigenstate
-        preparion must have the same number of qubits as the Grover operator. The output
-        are two unitaries that are the QAE circuit and its inverse in numpy matrix format.
-        This improves the performance.
-    """
-
-    numQubits=eigenstatePreparation.num_qubits
-    qr=QuantumRegister(numQubits+1)
-    qc=QuantumCircuit(qr)
-    qc.append(grover.control(),qr)
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    controlledGroverU=job.result().get_unitary()
-
-
-    numberQubitsEP=eigenstatePreparation.num_qubits
-    numberAllQubits=numberQubitsEP+precision
-
-    qr=QuantumRegister(numberAllQubits,"qr")
-    qc=QuantumCircuit(qr)
-
-    qc.append(eigenstatePreparation,qr[numberAllQubits-numberQubitsEP:])
-
-    for i in range(precision):
-        qc.h(qr[precision-i-1])
-        groverPower=np.linalg.matrix_power(controlledGroverU,2**i)
-        qc.append(UnitaryGate(groverPower),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsEP:])
-    qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
-
-    if showCircuit:
-        display(qc.draw(output='mpl'))
-
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    unitaryQAE=job.result().get_unitary()
-    unitaryQAEinv=np.linalg.inv(unitaryQAE)
-
-    return unitaryQAE,unitaryQAEinv
-
-def getGroverOracleFromQAEoracle(numQubitsOracle, unitaryQAE, unitaryQAEinv, resolution, targetProb):
+def getGroverOracleFromQAEoracle(numQubitsOracle, qae, resolution, targetProb):
     """ Create the a Grover type oracle from the QAE with a chosen target probability.
         The bins that correspond to the probability closest to the target are chosen
         and used to introduce a phase of -1. The first qubit is added for the
@@ -615,19 +573,21 @@ def getGroverOracleFromQAEoracle(numQubitsOracle, unitaryQAE, unitaryQAEinv, res
     qr=QuantumRegister(numQubitsOracle+1,'q')
     qc=QuantumCircuit(qr)
     qc.x(qr[0])
-    qc.append(UnitaryGate(unitaryQAE),qr[1:])
+    qc.append(qae,qr[1:])
 
     for c in bins:
         qc.append(ZGate().control(num_ctrl_qubits=resolution,ctrl_state=c),qr[1:resolution+1]+[qr[0]])
 
-    qc.append(UnitaryGate(unitaryQAEinv),qr[1:])
+    qc.append(qae.inverse(),qr[1:])
     qc.x(qr[0])
     return qc
 
-def circuitGroverOverQAE(iterations, numQubits, unitaryQAE, unitaryQAEinv, resolution, requiredQubits, targetProb):
-
-    qc=getGroverOracleFromQAEoracle(numQubits, unitaryQAE, unitaryQAEinv, resolution, targetProb)
-    sandwich=qc.to_gate()
+def circuitGroverOverQAE(iterations, numQubits, qae, resolution, requiredQubits, targetProb):
+    """ Construct a Grover search for a QAE constructed from a risk model with costs and a limit.
+        The target probability is replaced by the closest possible value of the QAE with the
+        resolution.
+    """
+    sandwich=getGroverOracleFromQAEoracle(numQubits, qae, resolution, targetProb)
 
     minus=getMinusMarkerGate(requiredQubits)
 
