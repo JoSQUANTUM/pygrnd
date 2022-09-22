@@ -492,7 +492,7 @@ def addCostsAndLimitToRiskModelCircuit(riskModelCircuit, nodes, costsNodes, limi
     riskModelCircuit.add_register(limitQubit)
     riskModelCircuit.append(XGate().control(num_ctrl_qubits=1,ctrl_state='0'),[costRegister[-1],limitQubit[0]])
 
-def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
+def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits, showCircuit=False):
     """ The input is a risk model with cost register and indicator
         qubit at the end that shows that the limit is reached. The value of necessaryBits
         shows the size of the register for the tuning qubits of the model. This
@@ -521,7 +521,9 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
     # Normal operation
     qc.append(riskModel,qr)
 
-    #display(qc.draw(output='mpl'))
+    if showCircuit:
+        display(qc.draw(output='mpl'))
+
     grover=qc.to_gate()
     grover.label="Grover"
 
@@ -561,7 +563,7 @@ def circuitStandardQAEUnitary(eigenstatePreparation, controlledGroverU, precisio
 
     return qc
 
-def unitariesOfStandardQAEUnitary(eigenstatePreparation, grover, precision):
+def unitariesOfStandardQAEUnitary(eigenstatePreparation, grover, precision, showCircuit=False):
     """ Construct the standard QAE circuit with the specified precision. The eigenstate
         preparion must have the same number of qubits as the Grover operator. The output
         are two unitaries that are the QAE circuit and its inverse in numpy matrix format.
@@ -591,6 +593,8 @@ def unitariesOfStandardQAEUnitary(eigenstatePreparation, grover, precision):
         qc.append(UnitaryGate(groverPower),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsEP:])
     qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
 
+    if showCircuit:
+        display(qc.draw(output='mpl'))
 
     backend = Aer.get_backend('unitary_simulator')
     job = execute(qc, backend)
