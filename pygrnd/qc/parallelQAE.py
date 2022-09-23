@@ -385,7 +385,7 @@ def circuitStandardQAE(eigenstatePreparation, groverOperator, precision):
 
     for i in range(precision):
         qc.h(qr[precision-i-1])
-        qc.append(groverOperator.power(2**i).control(),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsGroverOperator:])
+        qc.append(groverOperator.control().power(2**i),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsGroverOperator:])
     qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
 
     qc.measure(qr[:precision],cr)
