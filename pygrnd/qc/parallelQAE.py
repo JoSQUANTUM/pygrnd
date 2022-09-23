@@ -392,6 +392,28 @@ def circuitStandardQAE(eigenstatePreparation, groverOperator, precision):
     return qc
 
 #
+# Standard QAE. Do not measure at the end.
+#
+def circuitStandardQAEnoMeasurement(eigenstatePreparation, groverOperator, precision):
+    numberQubitsGroverOperator=groverOperator.num_qubits
+    numberQubitsEP=eigenstatePreparation.num_qubits
+    numberAllQubits=numberQubitsEP+precision
+
+    if numberQubitsGroverOperator>numberQubitsEP:
+        print("Error: Register of Grover operator has more qubits than register of eigenstate preparation")
+
+    qr=QuantumRegister(numberAllQubits,"qr")
+    qc=QuantumCircuit(qr)
+    qc.append(eigenstatePreparation,qr[numberAllQubits-numberQubitsEP:])
+
+    for i in range(precision):
+        qc.h(qr[precision-i-1])
+        qc.append(groverOperator.control().power(2**i),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsGroverOperator:])
+    qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
+
+    return qc
+
+#
 # Parallel QAE, no intermediate resets.
 #
 def circuitStandardParallelQAE(eigenstatePreparation, groverOperator, precision):

@@ -525,42 +525,6 @@ def constructGroverOperatorForRiskModelWithLimit(riskModel, necessaryBits):
 
     return qc
 
-def getUnitaryOfControlledGrover(numQubits, grover):
-    """ Turn the Grover operator in a controlled version
-        and use numpy arrays in order to improve
-        performance significantly.
-    """
-    qr=QuantumRegister(numQubits+1)
-    qc=QuantumCircuit(qr)
-    qc.append(grover.control(),qr)
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    return job.result().get_unitary()
-
-def standardQAEunitary(eigenstatePreparation, grover, precision):
-    """ Construct the standard QAE circuit with the specified precision. The eigenstate
-        preparion must have the same number of qubits as the Grover operator.
-    """
-
-    numQubits=eigenstatePreparation.num_qubits
-    controlledGroverU=getUnitaryOfControlledGrover(numQubits, grover)
-
-    numberQubitsEP=eigenstatePreparation.num_qubits
-    numberAllQubits=numberQubitsEP+precision
-
-    qr=QuantumRegister(numberAllQubits,"qr")
-    qc=QuantumCircuit(qr)
-
-    qc.append(eigenstatePreparation,qr[numberAllQubits-numberQubitsEP:])
-
-    for i in range(precision):
-        qc.h(qr[precision-i-1])
-        groverPower=np.linalg.matrix_power(controlledGroverU,2**i)
-        qc.append(UnitaryGate(groverPower),[qr[precision-i-1]]+qr[numberAllQubits-numberQubitsEP:])
-    qc.append(QFT(precision,do_swaps=False).inverse(),qr[:precision])
-
-    return qc
-
 def getGroverOracleFromQAEoracle(numQubitsOracle, qae, resolution, targetProb):
     """ Create the a Grover type oracle from the QAE with a chosen target probability.
         The bins that correspond to the probability closest to the target are chosen
