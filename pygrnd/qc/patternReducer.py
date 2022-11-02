@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 import json
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister, execute
 from qiskit.circuit.library import RGate,U3Gate,GMS,QFT,XGate,RXXGate,ZGate,PhaseGate,SwapGate,CXGate,RXGate,RYGate,RZGate, SXGate, SXdgGate, CPhaseGate, HGate,CCXGate
 from qiskit import Aer
 import qiskit
@@ -21,6 +21,7 @@ import math
 from scipy.linalg import pinv
 import numpy as np
 import itertools
+from pygrnd.qc.patternGenerator import insertPatternGates
 
 def invertParameters(params):
     if type(params)==type([]):
@@ -401,6 +402,38 @@ def getAllCandidates(qc, numQubits):
         if not(r in res2) and len(r)>0:
             res2.append(r)
     return res2
+
+# Apply a reducer for a pattern to a quantum circuit.
+def applyReducerPattern(qc,patternGateList,reducer):
+    # Find the relevant qubits.
+    qr=qc._qubits
+
+    relevantGates=[]
+    for c in patternGateList:
+        relevantGates.append(qc[c])
+
+    # Find the relevant qubits.
+    relevantQubits=[]
+    for g in relevantGates:
+        relevantQubits=relevantQubits+g[1]
+    relevantQubits=list(set(relevantQubits))
+    relevantQubits=sortedQubits(qc,relevantQubits)
+    relevantQubitsIndices=[]
+    for q in relevantQubits:
+        relevantQubitsIndices.append(qr.index(q))
+
+    # Generate new circuit with replacements.
+    qr2=QuantumRegister(len(qr))
+    qc2=QuantumCircuit(qr2)
+    for i in range(len(qc)):
+        if not(i in patternGateList):
+            newQubits=[]
+            for q in qc[i][1]:
+                newQubits.append(qr2[qr.index(q)])
+            qc2.append(qc[i][0],newQubits)
+        elif i==patternGateList[0]:
+            insertPatternGates(qc2,qr2,relevantQubitsIndices,reducer)
+    return qc2
 
 def reduceCircuitByPattern(qc, consideredQubits, allPatterns, costPattern):
     allCandidateBlocks=getAllCandidates(qc,consideredQubits)
