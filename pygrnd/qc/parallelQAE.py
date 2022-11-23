@@ -113,7 +113,10 @@ def constructGroverOperator(model, targets):
         lastBit=t[-1]
         if lastBit=='0':
             qc.x(qr[numberQubits-1])
-        qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state=t[:-1][::-1]),qr)
+        if numberQubits>1:
+            qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state=t[:-1][::-1]),qr)
+        else:
+            qc.z(qr[0])
         if lastBit=='0':
             qc.x(qr[numberQubits-1])
 
@@ -126,7 +129,10 @@ def constructGroverOperator(model, targets):
     qc.x(qr[0])
     qc.z(qr[0])
     qc.x(qr[0])
-    qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state='0'*(numberQubits-1)),qr[1:]+[qr[0]])
+    if numberQubits>1:
+        qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state='0'*(numberQubits-1)),qr[1:]+[qr[0]])
+    else:
+        qc.z(qr[0])
     qc.x(qr[0])
 
     # Normal operation
