@@ -12,7 +12,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.'''
 
-from setuptools import setup
+from setuptools import setup, find_packages
+
 
 setup(
     name='pygrnd',
@@ -24,7 +25,7 @@ setup(
     license='Apache 2.0',
     zip_safe=False,
     include_package_data=True,
-    packages=['pygrnd'],
+    packages= find_packages(), 
     install_requires=['qiskit',
                       'numpy',
                       'dimod',
