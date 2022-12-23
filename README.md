@@ -9,6 +9,7 @@ Pre-required: Qiskit Version 'qiskit': '0.32.1'
     pip install numpy
     pip install dimod
     pip install greedy
+    pip install pennylane
 
     git clone https://github.com/JoSQUANTUM/pygrnd.git
     cd pygrnd

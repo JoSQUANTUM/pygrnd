@@ -14,7 +14,6 @@ limitations under the License.'''
 
 from setuptools import setup, find_packages
 
-
 setup(
     name='pygrnd',
     version='0.1.0',
@@ -25,11 +24,12 @@ setup(
     license='Apache 2.0',
     zip_safe=False,
     include_package_data=True,
-    packages= find_packages(), 
+    packages= find_packages(),
     install_requires=['qiskit',
                       'numpy',
                       'dimod',
                       'dwave-greedy',
+                      'pennylane'
                       ],
     classifiers=[
         'Programming Language :: Python :: 3',
