@@ -1,0 +1,16 @@
+Metadata-Version: 2.1
+Name: pygrnd
+Version: 0.1.0
+Summary: A Python library for quantum algorithms and software
+Home-page: https://github.com/JoSQUANTUM/pygrnd
+Author: JoS QUANTUM
+Author-email: contact@jos-quantum.de
+License: Apache 2.0
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: Apache Software License
+Classifier: Operating System :: OS Independent
+License-File: LICENSE
+
+UNKNOWN
+

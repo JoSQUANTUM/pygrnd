@@ -1,0 +1,5 @@
+qiskit
+numpy
+dimod
+dwave-greedy
+pennylane
