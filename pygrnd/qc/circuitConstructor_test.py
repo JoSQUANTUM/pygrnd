@@ -146,3 +146,49 @@ def getDiffRandomStatePrep(qubits):
 #             biggestError=error
 #             print("new biggest error:",biggestError)
 
+#
+# Test all permutations of the qubits for the simple decomposition with
+# exponential overhead.
+#
+# qubits=5
+#
+# for perm in permutations(range(qubits)):
+#     qr=QuantumRegister(qubits,'q')
+#     qc=QuantumCircuit(qr)
+#
+#     qr2=[qr[perm[x]] for x in range(qubits)]
+#
+#     qc.append(XGate().control(qubits-2),qr2[:qubits-2]+[qr2[qubits-1]])
+#     qc.barrier()
+#     controlledXGate(qr2[:qubits-2], qr2[qubits-2], qr2[qubits-1], qc)
+#
+#     backend_sim = Aer.get_backend('unitary_simulator')
+#     job_sim = execute(qc, backend_sim)
+#     u=np.asarray(job_sim.result().get_unitary())
+#     error=np.linalg.norm(u-np.identity(2**qubits))
+#     if error>0.00000001:
+#         print("perm/error:",perm,error)
+
+#
+# Test all permutations of the qubits.
+#
+# qubits=6
+#
+# for perm in permutations(range(qubits)):
+#     qr=QuantumRegister(qubits,'q')
+#     qc=QuantumCircuit(qr)
+#
+#     qr2=[qr[perm[x]] for x in range(qubits)]
+#
+#     qc.append(XGate().control(qubits-2),qr2[:qubits-2]+[qr2[qubits-1]])
+#     qc.barrier()
+#     controlledXGateSplitStarter(qr2[:qubits-2], qr2[qubits-2], qr2[qubits-1], qc)
+#     if random.random()<0.001:
+#         display(qc.draw(output='mpl'))
+#
+#     backend_sim = Aer.get_backend('unitary_simulator')
+#     job_sim = execute(qc, backend_sim)
+#     u=np.asarray(job_sim.result().get_unitary())
+#     error=np.linalg.norm(u-np.identity(2**qubits))
+#     if error>0.00000001:
+#         print("perm/error:",perm,error)

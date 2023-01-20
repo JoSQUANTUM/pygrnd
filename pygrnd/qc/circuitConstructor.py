@@ -13,7 +13,7 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from qiskit.circuit.library.standard_gates import ZGate, UGate, PhaseGate
+from qiskit.circuit.library.standard_gates import ZGate, XGate, UGate, PhaseGate
 import math
 import numpy as np
 from pygrnd.qc.helper import num2bin
@@ -118,7 +118,6 @@ def decomposer(u, qc, qr):
     A0=np.matmul(A,A0)
     qc.append(PhaseGate(np.angle(A[lastPos][lastPos])).control(num_ctrl_qubits=n-1,ctrl_state='1'*(n-1)),reversed(qr))
 
-
 def circuitStateVector(v, qc, qr):
     """ Generate the inverse of a circuit that creates a state v on a register with (at least 2 qubits).
     """
@@ -150,3 +149,71 @@ def circuitStateVector(v, qc, qr):
     u2=np.matmul(A,u2)
     A0=np.matmul(A,A0)
     qc.append(PhaseGate(np.angle(A[lastPos][lastPos])).control(num_ctrl_qubits=n-1,ctrl_state='1'*(n-1)),reversed(qr))
+
+def controlledXGate(controls, ancilla, target, qc):
+    """ Implement an X gate, which is controlled by multiple qubits, with Toffoli gates and
+        one ancilla qubit. This method creates an exponential number of Toffoli gates in
+        the number of control qubits.
+    """
+    if len(controls)>3:
+        controlledXGate(controls[:-1],controls[-1],ancilla,qc)
+    else:
+        qc.append(XGate().control(len(controls)-1),controls[:-1]+[ancilla])
+
+    qc.ccx(controls[-1],ancilla,target)
+
+    if len(controls)>3:
+        controlledXGate(controls[:-1],controls[-1],ancilla,qc)
+    else:
+        qc.append(XGate().control(len(controls)-1),controls[:-1]+[ancilla])
+    qc.ccx(controls[-1],ancilla,target)
+
+def controlledXGateManyAncillas(controls, ancillas, target, qc):
+    """ Helper function. This is an implementation of lemma 7.2 of Barenco et. al.,
+        Elementary gates for quantum computation, Physical Review A52,
+        3457 (1995).
+    """
+    if len(controls)==2:
+        qc.ccx(controls[0],controls[1],target)
+        return
+    cbits=len(controls)
+    allAncillas=ancillas+[target]
+    #print(allAncillas)
+    for i in range(cbits-2):
+        qc.ccx(controls[-i-1],allAncillas[-i-2],allAncillas[-i-1])
+    qc.ccx(controls[0],controls[1],allAncillas[-(cbits-3)-2])
+    for i in range(cbits-2)[::-1]:
+        qc.ccx(controls[-i-1],allAncillas[-i-2],allAncillas[-i-1])
+    for i in range(1,cbits-2):
+        qc.ccx(controls[-i-1],allAncillas[-i-2],allAncillas[-i-1])
+    qc.ccx(controls[0],controls[1],allAncillas[-(cbits-3)-2])
+    for i in range(1,cbits-2)[::-1]:
+        qc.ccx(controls[-i-1],allAncillas[-i-2],allAncillas[-i-1])
+
+def controlledXGateToffoliDecomposition(controls, ancilla, target, qc):
+    """ Implement an X gate with many controls with a linear number of Toffoli gates using one ancilla. This
+        is an implementation of corollary 7.4 of Barenco et. al., Elementary gates for quantum computation,
+        Physical Review A52, 3457 (1995).
+    """
+    m1=math.ceil(len(controls)/2)
+    m2=len(controls)-m1
+
+    if m1>2:
+        controlledXGateManyAncillas(controls[:m1], controls[m1:], ancilla, qc)
+    else:
+        qc.append(XGate().control(m1),controls[:m1]+[ancilla])
+
+    if m2+1>2:
+        controlledXGateManyAncillas(controls[m1:]+[ancilla], controls[:m1], target, qc)
+    else:
+        qc.append(XGate().control(m2+1),controls[m1:m1+m2]+[ancilla]+[target])
+
+    if m1>2:
+        controlledXGateManyAncillas(controls[:m1], controls[m1:m1+m2], ancilla, qc)
+    else:
+        qc.append(XGate().control(m1),controls[:m1]+[ancilla])
+
+    if m2+1>2:
+        controlledXGateManyAncillas(controls[m1:]+[ancilla], controls[:m1], target, qc)
+    else:
+        qc.append(XGate().control(m2+1),controls[m1:]+[ancilla]+[target])
