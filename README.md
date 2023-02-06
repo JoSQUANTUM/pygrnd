@@ -1,5 +1,6 @@
 # pygrnd 
 is a libary of various quantum algorithms written by the Team JoS QUANTUM GmbH to support the development of Applications for quantum computing in Finance, Insurance and Energy.
+Let's you build quantum models and prototypes and usage of our quantum algorithms.
 
 ## Setup
 

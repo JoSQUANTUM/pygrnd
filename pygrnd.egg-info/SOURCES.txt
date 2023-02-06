@@ -9,6 +9,7 @@ pygrnd.egg-info/not-zip-safe
 pygrnd.egg-info/requires.txt
 pygrnd.egg-info/top_level.txt
 pygrnd/optimize/MonteCarloSolver.py
+pygrnd/optimize/UCPquboFunctionLibrary.py
 pygrnd/optimize/__init__.py
 pygrnd/optimize/bruteforce.py
 pygrnd/optimize/meritorder.py
@@ -20,6 +21,8 @@ pygrnd/qc/__init__.py
 pygrnd/qc/brm.py
 pygrnd/qc/brm_oracle.py
 pygrnd/qc/brm_test.py
+pygrnd/qc/circuitConstructor.py
+pygrnd/qc/circuitConstructor_test.py
 pygrnd/qc/helper.py
 pygrnd/qc/optimize.py
 pygrnd/qc/parallelQAE.py
