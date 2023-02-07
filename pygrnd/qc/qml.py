@@ -18,6 +18,10 @@ import pennylane as qml
 from pennylane import numpy as np
 import matplotlib.pyplot as plt
 
+from tqdm import tqdm_notebook
+
+
+
 
 
 def mse_loss(y_real: np.array, y_pred: np.array) -> float:
@@ -35,6 +39,8 @@ def mse_loss(y_real: np.array, y_pred: np.array) -> float:
         loss += (y1 - y2)**2
     loss /= len(y_real)
     return loss
+
+
 
 
 
@@ -57,6 +63,8 @@ def accuracy_loss(y_real: np.array, y_pred: np.array, threshold: float=0.5) -> f
             loss += 1
     loss /= len(y_real)
     return loss
+
+
 
 
 
@@ -85,8 +93,8 @@ def bce_loss(y_real: np.array, y_pred: np.array, eps:float=1e-8) -> float:
 
 
 
-def one_epoch(qnode: qml.QNode, weights: np.tensor, loss_function: function, opt, batch_size: int,
-              x_train: np.array, y_train: np.array):
+def one_epoch(qnode: qml.qnode, weights: np.tensor, loss_function, opt, batch_size: int,
+              x_train: np.array, y_train: np.array, epoch_label='0'):
     """Trains the given parametrized quantum circuit as a quantum neural network accross the given
     data. Returns the updated optimized parameters for this learning epoch.
 
@@ -109,7 +117,7 @@ def one_epoch(qnode: qml.QNode, weights: np.tensor, loss_function: function, opt
     indices = list(range(N))
     np.random.shuffle(indices)
 
-    for batch in range(N//batch_size):
+    for batch in tqdm_notebook(range(N//batch_size), desc='Epoch '+epoch_label, leave=False):
         x_batch = x_train[indices[batch*batch_size:(batch+1)*batch_size]]
         y_batch = y_train[indices[batch*batch_size:(batch+1)*batch_size]]
 
@@ -155,7 +163,7 @@ class QNNClassifier():
 
 
 
-    def __init__(self, qnode: qml.Qnode, weights_shape:tuple, loss_function: function = bce_loss):
+    def __init__(self, qnode: qml.qnode, weights_shape:tuple, loss_function = bce_loss):
         """Constructs the classification model
 
         Args:
@@ -175,8 +183,30 @@ class QNNClassifier():
 
 
 
+    def get_circuit_specs(self, weights=None, circuit_input=None):
+        if weights == None:
+            weights = self.weights
+        if circuit_input == None:
+            n_qubits = self.weights.shape[1]
+            circuit_input = np.random.randn(n_qubits)
+        specs_func = qml.specs(self.qnode)
+        return specs_func(weights, circuit_input)
+
+
+
+    def display_circuit(self, weights=None, circuit_input=None):
+        if weights == None:
+            weights = self.weights
+        if circuit_input == None:
+            n_qubits = self.weights.shape[1]
+            circuit_input = np.random.randn(n_qubits)
+        drawer = qml.draw_mpl(self.qnode, show_all_wires=True)
+        print(drawer(weights, circuit_input))
+       
+
+
     def fit(self, x_train: np.array, y_train: np.array, epochs: int, batch_size: int, optimizer,
-            learning_rate: float, threshold: float=0.5, verbose: bool=True):
+            learning_rate: float, threshold: float=0.5, verbose: bool=True, x_test=None, y_test=None):
         """Fits the model by performing supervised learning on the set (x_train, y_train). 
         A classical optimizer is used to minimize a cost function (self.loss_function evaluated
         between the model predictions and real data). During each training epoch, the model goes
@@ -209,22 +239,33 @@ class QNNClassifier():
         opt = optimizer(learning_rate)
 
         train_losses = []
+        test_losses = []
         
-        for epoch in range(epochs):
+        for epoch in tqdm_notebook(range(epochs), desc='Model Training'):
             self.weights = one_epoch(qnode=self.qnode, weights=self.weights, 
                                      loss_function=self.loss_function, opt=opt,
-                                     batch_size=batch_size, x_train=x_train, y_train=y_train)
+                                     batch_size=batch_size, x_train=x_train, y_train=y_train,
+                                     epoch_label=str(epoch+1))
 
             pred_epoch = self.predict_probas(x_train)
             train_loss = self.loss_function(y_train, pred_epoch)
             train_acc = accuracy_loss(y_train, [int(x>=threshold) for x in pred_epoch])
-
             train_losses.append(train_loss)
 
-            if verbose:
-                print(f'Epoch {epoch+1}/{epochs},   train loss = {train_loss},   train accuracy = {train_acc}')
+            if not (x_test==None):
+                y_hat = self.predict_probas(x_test)
+                test_loss = self.loss_function(y_test, y_hat)
+                test_acc = accuracy_loss(y_test, [int(x>=threshold) for x in pred_epoch])
+                test_losses.append(test_loss)            
 
-        return train_losses
+            if verbose:
+                if x_test==None:
+                    print(f'Epoch {epoch+1}/{epochs},   train loss = {train_loss},   train accuracy = {train_acc}')
+                else:
+                    print(f'Epoch {epoch+1}/{epochs},   train loss = {train_loss},   train accuracy = {train_acc},   test loss = {test_loss},   test accuracy = {test_acc}')
+
+
+        return train_losses, test_losses
 
 
     def predict_probas(self, x_list: np.array):
@@ -301,6 +342,28 @@ class QNNRegressor():
 
 
 
+    def get_circuit_specs(self, weights=None, circuit_input=None):
+        if weights == None:
+            weights = self.weights
+        if circuit_input == None:
+            n_qubits = self.weights.shape[1]
+            circuit_input = np.random.randn(n_qubits)
+        specs_func = qml.specs(self.qnode)
+        return specs_func(weights, circuit_input)
+
+
+
+    def display_circuit(self, weights=None, circuit_input=None):
+        if weights == None:
+            weights = self.weights
+        if circuit_input == None:
+            n_qubits = self.weights.shape[1]
+            circuit_input = np.random.randn(n_qubits)
+        drawer = qml.draw_mpl(self.qnode, show_all_wires=True)
+        print(drawer(weights, circuit_input))
+
+
+
     def fit(self, x_train: np.array, y_train: np.array, x_test: np.array, y_test: np.array,
             epochs: int, batch_size: int, optimizer, learning_rate:float, verbose: bool=True):
         """Fits the model by performing supervised learning on the set (x_train, y_train). 
@@ -340,10 +403,11 @@ class QNNRegressor():
         train_losses = []
         test_losses = []
         
-        for epoch in range(epochs):
+        for epoch in tqdm_notebook(range(epochs), desc='Model Training'):
             self.weights = one_epoch(qnode=self.qnode, weights=self.weights,
                                      loss_function=self.loss_function, opt=opt, 
-                                     batch_size=batch_size, x_train=x_train, y_train=y_train)
+                                     batch_size=batch_size, x_train=x_train, y_train=y_train,
+                                     epoch_label=str(epoch+1))
 
             pred_epoch = self.predict(x_train)
             train_loss = self.loss_function(y_train, pred_epoch)
@@ -359,6 +423,7 @@ class QNNRegressor():
         return train_losses, test_losses
     
 
+
     def predict(self, x_list: np.array):
         """Returns the predictions (model outputs) for the given input data.
 
@@ -366,4 +431,4 @@ class QNNRegressor():
             x_list (np.array):
                 Input data.
         """
-        return [(self.qnode(self.weights, x) + 1)/2 for x in x_list]
+        return [self.qnode(self.weights, x) for x in x_list]
