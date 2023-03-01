@@ -14,10 +14,15 @@ limitations under the License.'''
 
 from setuptools import setup, find_packages
 
+with open('README.md') as f:
+    long_description = f.read()
+
 setup(
     name='pygrnd',
     version='0.1.0',
     description='A Python library for quantum algorithms and software',
+    long_description_content_type="text/markdown",
+    long_description=long_description,
     url='https://github.com/JoSQUANTUM/pygrnd',
     author='JoS QUANTUM',
     author_email='contact@jos-quantum.de',
