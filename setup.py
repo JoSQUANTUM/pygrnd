@@ -34,7 +34,11 @@ setup(
                       'numpy',
                       'dimod',
                       'dwave-greedy',
-                      'pennylane'
+                      'pennylane',
+                      'pandas',
+                      'seaborn',
+                      'tqdm',
+                      'sklearn'
                       ],
     classifiers=[
         'Programming Language :: Python :: 3',
