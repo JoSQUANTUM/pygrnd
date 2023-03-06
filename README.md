@@ -215,7 +215,7 @@ In ``notebooks/outlier_detection.ipynb`` an example for fraud detection (binary 
 ## Optimization
 
 Implementations of different QUBO (Quadratic Unconstrained Binary Optimization) solver for benchmarks.
-Usually a QUBO is defined as a numpy array. For D-Wave it is converted to a dict.
+Methods for QUBO construction and solving. Classical brute-force solver, Monte Carlo, Quantum annealing (D-Wave), simulated annealing, Quantum approximate optimization algorithm.
 
 
 ### Monte Carlo random search
