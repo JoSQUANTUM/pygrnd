@@ -1,5 +1,7 @@
 name: Push pygrnd to TestPyPI
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-n-publish:
