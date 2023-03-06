@@ -23,8 +23,6 @@ Pre-required:
 
 ## Quantum Risk Modelling
 
-Pre-required: Qiskit Version 'qiskit': '>=0.32.1'
-
 Workflow to define a risk model like outlined in (https://arxiv.org/abs/2103.05475).
 Build a Grover operator with a state for which the overall probabilty should be evaluated.
 Standard Quantum Amplitude Estimation algorithm.
@@ -123,9 +121,6 @@ Example:
 
 ## Pattern-based Circuit optimizer
 
-Pre-required: Qiskit Version 'qiskit': '>=0.32.1'
-
-
 ### Background: Patterns
 
 A pattern is an abstract representation of a sequence of quantum gates that corresponds to the identity. The gates are denoted by a string, e.g. H or X, and the parameters are variables or concrete values. The gates act on qubits that are denoted by numbers only.
@@ -192,10 +187,7 @@ H, Z, SWAP, CNOT, CCX, CZ, S, Sdg, T, Tdg, SX, SXdg, P, RXX, GPI, GPI2, GZ, CP, 
 In notebook ``notebooks/circuitConstructor.ipynb`` there are examples of how to use the circuit decomposer and circuit optimizer.
 
 
-
 ## Quantum machine learing
-
-Pre-required: Qiskit Version 'pennylane': '>=0.28.0'
 
 Quantum machine learning functions for regression and classifiction. 
 
