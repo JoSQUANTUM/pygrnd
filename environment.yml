@@ -11,4 +11,7 @@ dependencies:
     - qiskit
     - dimod
     - dwave-greedy
+    - pennylane
+    - pandas
     - tqdm
+    - scikit-learn

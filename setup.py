@@ -20,7 +20,7 @@ with open('README.md') as f:
 setup(
     name='pygrnd',
     version='0.1.2',
-    description='A Python library for quantum algorithms and software',
+    description='A python library for quantum algorithms and software',
     long_description_content_type="text/markdown",
     long_description=long_description,
     url='https://github.com/JoSQUANTUM/pygrnd',
@@ -38,7 +38,7 @@ setup(
                       'pandas',
                       'seaborn',
                       'tqdm',
-                      'sklearn'
+                      'scikit-learn'
                       ],
     classifiers=[
         'Programming Language :: Python :: 3',
