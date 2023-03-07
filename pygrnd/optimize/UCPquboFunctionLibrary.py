@@ -14,8 +14,10 @@ import dimod
 import neal
 import greedy
 
-from azure.quantum.optimization import Problem, ProblemType, Term
-from azure.quantum import Workspace
+
+# Uncomment to use Azure Quantum-Inspired Optimization
+#from azure.quantum.optimization import Problem, ProblemType, Term
+#from azure.quantum import Workspace
 
 
 def penaltycheck(p,dgen,mingen,start,minup,mindown,on,T,n,pres):
@@ -644,6 +646,8 @@ def QuantumAnnealingUCPqubo(Q,Num,rounds,DWtoken,dgen,varcost,startcost,mingen,m
 
     return price, Ans, combined, errors, bestprice, bestpriceAns, bestpriceobj, bestobjectiveprice, bestobjectiveAns, bestobjective, timetosolve
 
+## Uncomment to use Azure QIO
+"""
 def OptProblem(CostMatrix) -> Problem:
 
     """
@@ -940,6 +944,9 @@ def AzureRoutineSQMC(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown
         combined7.append(combiobjpriceokay)
 
     return price7, Ans, combined7, errors7, bestprice, bestpriceAns, bestobjective, bestobjectiveAns, bestobjectiveprice, bestpriceobj, timetosolve
+
+"""
+
 
 def buildUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,mingen,maxgen):
 
