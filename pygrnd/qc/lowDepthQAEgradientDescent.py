@@ -52,12 +52,12 @@ def errorAllPoints(theta, vectorN, vectorM, vectorR):
         error=error+(probMeasured-probExpected)**2
     return error
 
-def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize):
+def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize, learningRate):
     ''' For given lists vectorN, vectorM and vectorR perform a gradient
-        descent search for the angle theta that minimizes errorAllPoints. The
-        method returns the angle and the corresponding error. Other
-        parameters are the step size and the start value for theta. No
-        error model.
+        descent search for the angle theta that minimizes errorAllPoints.
+        The method returns the angle and the corresponding error from the
+        deviation of the parameter fitting. Other parameters are the step
+        size for the gradient approximation, the learning rate and the start value for theta.
     '''
 
     # Initialize the search.
@@ -67,27 +67,26 @@ def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize):
 
     # Search as long we find an improvement.
     while continueFlag==True:
-        thetaPlus=bestTheta+stepSize
-        errorPlus=errorAllPoints(thetaPlus, vectorN, vectorM, vectorR)
+        bestThetaPrime=bestTheta+stepSize
+        error1=errorAllPoints(bestThetaPrime, vectorN, vectorM, vectorR)
 
-        thetaMinus=bestTheta-stepSize
-        errorMinus=errorAllPoints(thetaMinus, vectorN, vectorM, vectorR)
+        gradientUnnormed=[(error1-bestError)/stepSize]
+        gradientNorm=sum(abs(x)**2 for x in gradientUnnormed)
+        gradientNormed=[x/math.sqrt(gradientNorm) for x in gradientUnnormed]
 
-        bestThetaLocal=thetaPlus
-        bestErrorLocal=errorPlus
+        thetaNew=bestTheta-learningRate*gradientNormed[0]
 
-        if errorMinus<bestErrorLocal:
-            bestThetaLocal=thetaMinus
-            bestErrorLocal=errorMinus
+        errorNew=errorAllPoints(thetaNew, vectorN, vectorM, vectorR)
 
-        if bestErrorLocal<bestError:
-            bestTheta=bestThetaLocal
-            bestError=bestErrorLocal
+        if errorNew+0.000001<bestError:
+            bestError=errorNew
+            bestTheta=thetaNew
         else:
             continueFlag=False
+
     return bestTheta, bestError
 
-def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0.01):
+def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0.0001, learningRate=0.0001):
     ''' Run the gradient search for given vectorN, vectorM and vectorR. The search
         starts with random angles and has the specified number of rounds and step size.
         Returns the angle along with the corresponding probability estimation for the
@@ -95,12 +94,12 @@ def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0
     '''
 
     # Initialize search with random point.
-    theta=random.random()
-    bestTheta,bestError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize)
+    theta=2*math.pi*random.random()
+    bestTheta,bestError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
 
     for i in range(rounds):
         theta=2*math.pi*random.random()
-        currentTheta,currentError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize)
+        currentTheta,currentError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
         if currentError<bestError:
             bestTheta=currentTheta
             bestError=currentError
@@ -147,7 +146,8 @@ def gradientOptimizerVectorErrorModel(vectorN, vectorM, vectorR, thetaStart, aSt
         descent search for the angle theta and parameters a and f of the error model
         that minimizes errorAllPoints. The method returns the angle and the parameters of the
         error model and the corresponding error from the deviation of the parameter fitting.
-        Other parameters are the step size and the start value for theta.
+        Other parameters are the step size for the gradient approximation, the learning rate and
+        the start value for theta and the parameters of the error model.
     '''
 
     # Initialize the search.
