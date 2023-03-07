@@ -31,13 +31,13 @@ def getSmallerAngle(angle):
 # Functions without the exponential error model.
 #
 
-def expectedProbability(theta, ell):
+def expectedProbabilityNoErrorModel(theta, ell):
     ''' Return the expected probability for a good state for angle theta
         and ell Grover operators after the initialization. No error model.
     '''
     return math.sin((2*ell+1)*theta/2)**2
 
-def errorAllPoints(theta, vectorN, vectorM, vectorR):
+def errorAllPointsNoErrorModel(theta, vectorN, vectorM, vectorR):
     ''' Return the sum of the squared deviations of the expected
         counts of good results and the measured results for the
         angle theta. vectorN contains the total counts, vectorM
@@ -48,11 +48,11 @@ def errorAllPoints(theta, vectorN, vectorM, vectorR):
     error=0.0
     for i in range(len(vectorN)):
         probMeasured=vectorR[i]/vectorN[i]
-        probExpected=expectedProbability(theta, vectorM[i])
+        probExpected=expectedProbabilityNoErrorModel(theta, vectorM[i])
         error=error+(probMeasured-probExpected)**2
     return error
 
-def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize, learningRate):
+def gradientOptimizerVectorNoErrorModel(vectorN, vectorM, vectorR, thetaStart, stepSize, learningRate):
     ''' For given lists vectorN, vectorM and vectorR perform a gradient
         descent search for the angle theta that minimizes errorAllPoints.
         The method returns the angle and the corresponding error from the
@@ -62,13 +62,13 @@ def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize, lea
 
     # Initialize the search.
     bestTheta=thetaStart
-    bestError=errorAllPoints(thetaStart, vectorN, vectorM, vectorR)
+    bestError=errorAllPointsNoErrorModel(thetaStart, vectorN, vectorM, vectorR)
     continueFlag=True
 
     # Search as long we find an improvement.
     while continueFlag==True:
         bestThetaPrime=bestTheta+stepSize
-        error1=errorAllPoints(bestThetaPrime, vectorN, vectorM, vectorR)
+        error1=errorAllPointsNoErrorModel(bestThetaPrime, vectorN, vectorM, vectorR)
 
         gradientUnnormed=[(error1-bestError)/stepSize]
         gradientNorm=sum(abs(x)**2 for x in gradientUnnormed)
@@ -76,7 +76,7 @@ def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize, lea
 
         thetaNew=bestTheta-learningRate*gradientNormed[0]
 
-        errorNew=errorAllPoints(thetaNew, vectorN, vectorM, vectorR)
+        errorNew=errorAllPointsNoErrorModel(thetaNew, vectorN, vectorM, vectorR)
 
         if errorNew+0.000001<bestError:
             bestError=errorNew
@@ -86,7 +86,7 @@ def gradientOptimizerVector(vectorN, vectorM, vectorR, thetaStart, stepSize, lea
 
     return bestTheta, bestError
 
-def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0.0001, learningRate=0.0001):
+def loopGradientOptimizerVectorNoErrorModel(vectorN, vectorM, vectorR, rounds=10, stepSize=0.0001, learningRate=0.0001):
     ''' Run the gradient search for given vectorN, vectorM and vectorR. The search
         starts with random angles and has the specified number of rounds and step size.
         Returns the angle along with the corresponding probability estimation for the
@@ -95,11 +95,11 @@ def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0
 
     # Initialize search with random point.
     theta=2*math.pi*random.random()
-    bestTheta,bestError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
+    bestTheta,bestError=gradientOptimizerVectorNoErrorModel(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
 
     for i in range(rounds):
         theta=2*math.pi*random.random()
-        currentTheta,currentError=gradientOptimizerVector(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
+        currentTheta,currentError=gradientOptimizerVectorNoErrorModel(vectorN, vectorM, vectorR, theta, stepSize, learningRate)
         if currentError<bestError:
             bestTheta=currentTheta
             bestError=currentError
@@ -112,7 +112,7 @@ def loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=10, stepSize=0
 # vectorM=[ 0,  1,  2,  3,  4,  5,  6,  7,  8]
 # vectorR=[10, 29,  3, 21, 23,  0, 28, 10,  7]
 #
-# loopGradientOptimizerVector(vectorN, vectorM, vectorR, rounds=100, stepSize=0.0001)
+# loopGradientOptimizerVectorNoErrorModel(vectorN, vectorM, vectorR, rounds=100, stepSize=0.0001)
 
 
 #
