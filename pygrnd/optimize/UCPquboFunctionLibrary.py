@@ -650,9 +650,9 @@ def QuantumAnnealingUCPqubo(Q,Num,rounds,DWtoken,dgen,varcost,startcost,mingen,m
 """
 def OptProblem(CostMatrix) -> Problem:
 
-    """
+    """"""
     Azure routine to load matrix to Problem
-    """
+    """"""
 
     terms = []
 
@@ -672,14 +672,14 @@ def OptProblem(CostMatrix) -> Problem:
 
 def AzureRoutinePT(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bestprice, bestpriceAns, bestobjective, bestobjectiveAns, bestobjectiveprice, bestpriceobj, boolcheck, Qcost,graphicsout):
 
-    """
+    """"""
     Microsoft Quantum Inspired Optimization
     Azure quantum-inspired algorithms: Parallel Tempering
     Rephrases the optimization problem as a thermodynamic system and runs multiple copies of a system, randomly initialized, at different temperatures. Then, based on a specific protocol, exchanges configurations at different temperatures to find the optimal configuration.
     Azure workspace need to be loaded
     Q: Qubo martix as input
     Num: Number of samples
-    """
+    """"""
 
     from azure.quantum.optimization import Problem, ProblemType, Term
     from azure.quantum.optimization import ParallelTempering
@@ -766,14 +766,14 @@ def AzureRoutinePT(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown,T
 
 def AzureRoutineQMC(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bestprice, bestpriceAns, bestobjective, bestobjectiveAns, bestobjectiveprice, bestpriceobj, boolcheck, Qcost,graphicsout):
 
-    """
+    """"""
     Microsoft Quantum Inspired Optimization
     Azure quantum-inspired algorithms: Quantum Monte Carlo
     Similar to Simulated Annealing but the changes are by simulating quantum-tunneling through barriers rather than using thermal energy jumps.
     Azure workspace need to be loaded
     Q: Qubo martix as input
     Num: Number of samples
-    """
+    """"""
     
     from azure.quantum.optimization import Problem, ProblemType, Term
     from azure.quantum.optimization import QuantumMonteCarlo
@@ -857,14 +857,14 @@ def AzureRoutineQMC(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown,
 
 def AzureRoutineSQMC(workspace,Q,Num,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bestprice, bestpriceAns, bestobjective, bestobjectiveAns, bestobjectiveprice, bestpriceobj, boolcheck, Qcost,graphicsout):
 
-    """
+    """"""
     Microsoft Quantum Inspired Optimization
     Azure quantum-inspired algorithms: Substochastic Monte Carlo
     Substochastic Monte Carlo is a diffusion Monte Carlo algorithm inspired by adiabatic quantum computation. It simulates the diffusion of a population of walkers in search space, while walkers are removed or duplicated based on how they perform according to the cost function.
     Azure workspace need to be loaded
     Q: Qubo martix as input
     Num: Number of samples
-    """
+    """"""
     
     from azure.quantum.optimization import Problem, ProblemType, Term
     from azure.quantum.optimization import SubstochasticMonteCarlo
