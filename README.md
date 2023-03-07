@@ -19,15 +19,18 @@ Pre-required:
     pip install dwave-greedy
     pip install pennylane
  
-# Tutorials
+# Tutorials and notebooks
+
+You can find example notebooks with usage of pygrnd functions in ``notebooks/``
 
 ## Quantum Risk Modelling
 
-Workflow to define a risk model like outlined in (https://arxiv.org/abs/2103.05475).
+Notebook: ``risk_model.ipynb`` and ``sensitivity_analysis.ipynb``
+
+Workflow to define a risk model like outlined in (<https://arxiv.org/abs/2103.05475>).
 Build a Grover operator with a state for which the overall probabilty should be evaluated.
 Standard Quantum Amplitude Estimation algorithm.
 Using QASM simulator you should not use more than 20 qubits (including the QAEqubits) on your local machine using simulator.
-
 
     - Input risk items, instrinsic and transition probabilities
     - List of states to estimate probabilities for the desired state
@@ -98,6 +101,11 @@ Classical evaluation of risk model:
 
 ## Amplitude Estimation without Phase Estimation
 
+Notebook: ``parallelQAE.ipynb``
+
+This notebook explaines functions for our proprietary quantum algorithm described in <https://arxiv.org/abs/2204.01337>.
+Parallel QAE is a quantum algorithm for Monte Carlo simulation on quantum computers with reduced gate depth and therefore a candidate to run quantum models on noisy quantum computers without full error-correction.
+
 - We have an operator A and a set of good results that have probability a in total.
 - We construct the Grover oracle G for A.
 - We construct a circuit with m calls of G in addition to one call of A and we run the circuit N times. We obtain h good results.
@@ -119,7 +127,11 @@ Example:
 
 
 
-## Pattern-based Circuit optimizer
+## Pattern-based circuit optimizer
+
+Notebook: ``circuitConstructor.ipynb``
+
+The methods demonstrate how quantum circuits can be optimized to reduced gate depth. The methods are implementations or variations of algorithms of the following paper <https://doi.org/10.1103/PhysRevA.52.3457>. 
 
 ### Background: Patterns
 
@@ -194,7 +206,9 @@ Quantum machine learning functions for regression and classifiction.
 
 ### Example: Classification
 
-In ``notebooks/outlier_detection.ipynb`` an example for fraud detection (binary classification) based on a publicly available Kaggle data set is done.
+Notebook: ``notebooks/outlier_detection.ipynb`` 
+
+Example for fraud detection (binary classification) using parametrized quantum circuits to analyze a publicly available Kaggle data set.
 
 
 ### Example: Forecasting (coming soon)
@@ -203,12 +217,22 @@ In ``notebooks/outlier_detection.ipynb`` an example for fraud detection (binary 
 ### Example: Synthetic data (coming soon)
 
 
-
 ## Optimization
+
+
+
+Notebook ``ucp_relaxedQUBO.ipynb`` explaines the main idea of how to encode several variations of the Unit Commitment Problem (UCP, <https://en.wikipedia.org/wiki/Unit_commitment_problem_in_electrical_power_production>) as a QUBO (quadratic unconstrained binary optimization). 
+The UCP answers the following question: Which power generator should run at what level at which time to satisfy constrains like demand in each time step, power generator parameter like minimum and maximum up and down times and ramps. Because of growing amount of renewable energy grid in-feed, uncertainty of changing weather conditions requires fast precise solutions to the UCP. The notebook explains how the approach can be seen as a first attempt towards robust optimization by incorporating uncertainty from renewable energy supply. <https://arxiv.org/abs/2301.01108>
 
 Implementations of different QUBO (Quadratic Unconstrained Binary Optimization) solver for benchmarks.
 Methods for QUBO construction and solving. Classical brute-force solver, Monte Carlo, Quantum annealing (D-Wave), simulated annealing, Quantum approximate optimization algorithm.
 
+Notebook ``ucp_sat.ipynb`` explaines how to encode constraints as SAT formulation. THis construction is then mapped to a QUBO and several problem sets are benchmarked.
+
+Notebook ``merit_order.ipynb`` is the very first version of the merit order problem with power generator costs, static supply and demand formulated as knapsack.
+
+This work is based on the governmental funded project "EnerQuant":
+<https://ercim-news.ercim.eu/en128/special/energy-economics-fundamental-modelling-with-quantum-algorithms>
 
 ### Monte Carlo random search
 
@@ -265,6 +289,8 @@ Examples:
     print(r,a)
 
 ### Quantum Approximate Optimization Algorithm (QAOA)
+
+A quantum algorithm to solve QUBO formulations on gate-based quantum computers. The function requires qiskit to construct circuits (qiskit high-level functions are not used).
 
 - input QUBO matrix as numpy array
 - build cost Hamiltonian U(gamma) using mapping x --> (x - 1) /2 (matrixConvertInv(m))
