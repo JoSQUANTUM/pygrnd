@@ -15,12 +15,7 @@ import neal
 import greedy
 
 
-# Uncomment to use Azure Quantum-Inspired Optimization
-#from azure.quantum.optimization import Problem, ProblemType, Term
-#from azure.quantum import Workspace
-
-
-def penaltycheck(p,dgen,mingen,start,minup,mindown,on,T,n,pres):
+def penaltycheck(p,dgen,mingen,start,minup,mindown,on,T,n,pres,verbose=False):
     
     """
     function penaltycheck checks if constraints are violated by checking the binary solution-vector "p"
@@ -85,14 +80,21 @@ def penaltycheck(p,dgen,mingen,start,minup,mindown,on,T,n,pres):
                     for tau in range(t,enddown):
                         if power[tau][i]>0:
                             mindowncheck=False
-    print('pmincheck: ',pmincheck)
-    print('minupcheck: ',minupcheck)
-    print('mindowncheck: ',mindowncheck)
-    print('oncheck: ',oncheck)
-    print('startcheck: ',startcheck)
+    
+    if verbose==True:
+        print('pmincheck: ',pmincheck)
+        print('minupcheck: ',minupcheck)
+        print('mindowncheck: ',mindowncheck)
+        print('oncheck: ',oncheck)
+        print('startcheck: ',startcheck)
+    
     if pmincheck==False or minupcheck==False or mindowncheck==False or oncheck==False or startcheck==False:
         okay=False
     quality=1-(minupviolation+mingenviolation)/(n*T)
+    
+    if verbose==True:
+        print('all checks: ',okay)
+    
     return okay, pmincheck, oncheck, startcheck, minupcheck, mindowncheck, quality
 
 
@@ -133,6 +135,8 @@ def BruteForceUCPqubo(M,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bes
     Solve QUBO brute force by iterating through every possible 2^N combinations of the solution vector x^T Q x and checking the objective
 
     """
+
+    print("Start solver engine: Brute force iterations (very inefficient and can be very long running)")
 
     starttime = time.process_time()
     m=len(M)                                                                                      #check all possible combinations for solution vector and search global minimum
@@ -197,8 +201,7 @@ def BruteForceUCPqubo(M,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bes
         combined.append(np.array(combiobjpriceokay))
     timetosolve=time.process_time() - starttime                                               # calculate time for problem saving
     if graphicsout==True:
-        print('time to brute solve the best solution:',timetosolve)
-
+        
         fig1, ax1 = plt.subplots()                                                            # plot energy landscape and costs of all possible solutions
 
         ax2 = ax1.twinx()
@@ -210,6 +213,8 @@ def BruteForceUCPqubo(M,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,bes
         ax2.set_ylabel('cost value', color='r', fontsize=20)
         plt.show()
 
+    print("Time to solve (wall time): ", timetosolve)
+
     return minimum_value, minimum_vector, combined, saveresultsprice, saveresultsobjective, errors, bestprice, bestpriceAns, bestobjective, bestobjectiveAns, bestobjectiveprice, bestpriceobj, timetosolve
 
 
@@ -220,6 +225,8 @@ def MonteCarloUCPqubo(Q,N,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,b
     """
     Monte Carlo solver that randomly samples from solution space N times a given number of binary vectors and checks if constraints are fulfilled
     """
+    print("Start solver engine: Monte Carlo random")
+    print(Num, "iterations")  
 
     starttime = time.process_time()
     m=len(Q)
@@ -289,8 +296,6 @@ def MonteCarloUCPqubo(Q,N,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,b
 
     timetosolve=time.process_time() - starttime                                               # calculate time for problem saving
     if graphicsout==True:
-        print('time to brute solve the best solution:',timetosolve)
-
         fig1, ax1 = plt.subplots()                                                # plot energy landscape and costs of all possible solutions
 
         ax2 = ax1.twinx()
@@ -302,6 +307,8 @@ def MonteCarloUCPqubo(Q,N,dgen,varcost,startcost,mingen,minup,mindown,T,n,pres,b
         ax2.set_ylabel('cost value', color='r', fontsize=20)
         plt.show()
 
+    print("Time to solve (wall time): ", timetosolve)
+    
     return cheapestPrice , a, combined, errors, bestprice, bestpriceAns, bestpriceobj, bestobjectiveprice, bestobjectiveAns, bestobjective, timetosolve
 
 
@@ -310,6 +317,9 @@ def MCsteepestdescentUCPqubo(Q,N,dgen,varcost,startcost,mingen,minup,mindown,T,n
     """
     Variant of the Monte Carlo solver
     """
+
+    print("Start solver engine: Monte Carlo steepest descent")
+    print(rounds,"rounds and ",Num, "iterations")
 
     starttime = time.process_time()
     v=np.random.randint(2, size=(1, len(Q)))
@@ -415,18 +425,16 @@ def MCsteepestdescentUCPqubo(Q,N,dgen,varcost,startcost,mingen,minup,mindown,T,n
 
     timetosolve=time.process_time() - starttime                                               # calculate time for problem saving
     if graphicsout==True:
-        print('time to brute solve the best solution:',timetosolve)
-
         fig1, ax1 = plt.subplots()
-
         ax2 = ax1.twinx()
         ax1.plot([k for k in range(len(saveresultsobjective))],[saveresultsobjective[k][0] for k in range(len(saveresultsobjective))],'b-')
         ax2.plot([k for k in range(len(saveresultsprice))],[saveresultsprice[k][0] for k in range(len(saveresultsprice))],'rx')
-
         ax1.set_xlabel('states', fontsize=20)
         ax1.set_ylabel('objective value', color='b', fontsize=20)
         ax2.set_ylabel('cost value', color='r', fontsize=20)
         plt.show()
+
+    print("Time to solve (wall time): ",timetosolve)
 
     return r, a, combined, errors, bestprice, bestpriceAns, bestpriceobj, bestobjectiveprice, bestobjectiveAns, bestobjective, timetosolve
 
@@ -440,6 +448,9 @@ def SimulatedAnnealingUCPqubo(Q,Num,rounds,dgen,varcost,startcost,mingen,minup,m
     Num: Number of samples
     rounds: number of subsequent rounds of simulated annealing with initial solutions as input states
     """
+
+    print("Start solver engine: Simulated annealing")
+    print(rounds,"rounds and ",Num, "iterations")
 
     import dimod
     import neal
@@ -523,6 +534,7 @@ def SimulatedAnnealingUCPqubo(Q,Num,rounds,dgen,varcost,startcost,mingen,minup,m
         combiobjpriceokay=[solobj[L],np.array(price),np.array(errorquality)]
         combined.append(np.array(combiobjpriceokay))
 
+    print("Time to solve (wall time): ",timetosolve)
 
     return price, Ans, combined, errors, bestprice, bestpriceAns, bestpriceobj, bestobjectiveprice, bestobjectiveAns, bestobjective, timetosolve
 
@@ -537,6 +549,9 @@ def QuantumAnnealingUCPqubo(Q,Num,rounds,DWtoken,dgen,varcost,startcost,mingen,m
     Num: Number of samples
     rounds: number of subsequent rounds of simulated annealing with initial solutions as input states
     """
+
+    print("Start solver engine: D-Wave QPU quantum annealing")
+    print(Num, "iterations, ","rounds",rounds)
 
     import dimod
     import neal
@@ -644,11 +659,17 @@ def QuantumAnnealingUCPqubo(Q,Num,rounds,DWtoken,dgen,varcost,startcost,mingen,m
         combiobjpriceokay=[solobj[L],np.array(price),np.array(errorquality)]
         combined.append(combiobjpriceokay)
 
+    print("Time to solve (wall time): ",timetosolve)
+
     return price, Ans, combined, errors, bestprice, bestpriceAns, bestpriceobj, bestobjectiveprice, bestobjectiveAns, bestobjective, timetosolve
 
 ## Uncomment to use Azure QIO
 """
 def OptProblem(CostMatrix) -> Problem:
+
+    # Uncomment to use Azure Quantum-Inspired Optimization
+    #from azure.quantum.optimization import Problem, ProblemType, Term
+    #from azure.quantum import Workspace
 
     """"""
     Azure routine to load matrix to Problem
@@ -958,6 +979,8 @@ def buildUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,m
     List of power unit parameters, precision, time steps, demand, costs, min up/down min/max supply parameters
     """
 
+    print("Start building UCP QUBO")
+
     qubostart = time.process_time()
 
 
@@ -1089,6 +1112,8 @@ def buildSUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,
     Input:
     List of power unit parameters, precision, time steps, demand, costs, min up/down min/max supply parameters, list of demand and supply including probabilities from renewables
     """
+
+    print("Start building relaxed UCP QUBO")
 
     qubostart = time.process_time()
 
