@@ -292,3 +292,40 @@ def evaluateQuantum(timesteps, nodes, probFail, probRecovery, edges):
         else:
             res2.append(0)
     return res2
+
+def constructGroverOperatorWithPhaseGateOnLastTimeStep(model, phaseGate, numberNodes):
+    ''' Construct the Grover operator for the model gate of a probabilistic network
+        model with time steps. The phase gate is applied to the part of the qubits
+        that correspond to the last time step. The number of nodes of the
+        network must be provided.
+    '''
+    numberQubits=model.num_qubits
+    qr=QuantumRegister(numberQubits,'q')
+    qc=QuantumCircuit(qr)
+
+    # mark the good states sequentially
+    qc.append(phaseGate,qr[-numberNodes:])
+
+    # Inverse operation
+    qc.append(model.inverse(),qr)
+
+    # Mark 0 with -1, include scalar -1 in front of formula
+    qc.x(qr[0])
+    qc.z(qr[0])
+    qc.x(qr[0])
+    qc.z(qr[0])
+    qc.x(qr[0])
+    if numberQubits>1:
+        qc.append(ZGate().control(num_ctrl_qubits=numberQubits-1,ctrl_state='0'*(numberQubits-1)),qr[1:]+[qr[0]])
+    else:
+        qc.z(qr[0])
+    qc.x(qr[0])
+
+    # Normal operation
+    qc.append(model,qr)
+
+    grover=qc.to_gate()
+    grover.label="Grover"
+
+    return grover
+
