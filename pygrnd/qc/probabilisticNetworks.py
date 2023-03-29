@@ -17,7 +17,7 @@ import math
 import numpy as np
 from pygrnd.qc.helper import allCombinations, num2bin
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister, Aer, execute
-from qiskit.circuit.library import RYGate
+from qiskit.circuit.library import RYGate, ZGate
 
 def monteCarloEvaluation(timesteps, nodes, probFail, probRecovery, edges, rounds=100000):
     """ Evaluate a probabilistic network with a Monte Carlo simulation. The output
