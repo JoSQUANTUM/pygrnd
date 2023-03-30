@@ -38,6 +38,7 @@ setup(
                       'pandas',
                       'seaborn',
                       'tqdm',
+                      'pylatexenc',
                       'scikit-learn'
                       ],
     classifiers=[
