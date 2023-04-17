@@ -39,7 +39,11 @@ setup(
                       'seaborn',
                       'tqdm',
                       'pylatexenc',
-                      'scikit-learn'
+                      'scikit-learn',
+                      'DateTime',
+                      'shap',
+                      'xgboost',
+                      'holidays'
                       ],
     classifiers=[
         'Programming Language :: Python :: 3',
