@@ -376,7 +376,7 @@ class QNNRegressor():
             x_train (np.array):
                 Training inputs.
             y_train (np.array):
-                Training outputs. Must be elements of [0, 1].
+                Training outputs. Must be elements of [O, 1].
             x_test (np.array):
                 Testing inputs.
             y_test (np.array):
@@ -431,4 +431,4 @@ class QNNRegressor():
             x_list (np.array):
                 Input data.
         """
-        return [self.qnode(self.weights, x) for x in x_list]
+        return [(self.qnode(self.weights, x)+ 1) / 2 for x in x_list]
