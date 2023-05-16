@@ -34,6 +34,7 @@ setup(
                       'numpy',
                       'dimod',
                       'dwave-greedy',
+                      'dwave-neal',
                       'pennylane>=0.27.0',
                       'pandas',
                       'seaborn',
