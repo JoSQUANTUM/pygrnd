@@ -276,7 +276,8 @@ def solve_qubo(objs, cstrs, λ, P, m, annealingSamples=1, annealingTime=20, n_te
         A dataframe of solutions, where each row represents a single test.
         The columns are: the best solution from each test ('w'), objective function values
         ('obj_0', 'obj_1', ...), constraint function values ('cstr_0', 'cstr_1', ...),
-        and the respective solving time ('time') in microseconds (1 µs = 1e-6 s).
+        the respective solving time ('time') in microseconds (1 µs = 1e-6 s),
+        and the scalarization factors used ('λ').
         For the time of quantum annealing on real D-Wave hardware, the solving time
         is calculated as 'qpu_access_time' + 'post_processing_overhead_time'.
     """
@@ -291,7 +292,7 @@ def solve_qubo(objs, cstrs, λ, P, m, annealingSamples=1, annealingTime=20, n_te
     for i in tqdm(range(n_tests), disable=(not disp or n_tests == 1)):
         bin_vect, solving_time = anneal(bqm, annealingSamples, annealingTime, DWtoken, DWregion, steepest_descent)
         w, val_objs, val_cstrs = __recombine_bin_vect(bin_vect, objs, cstrs, v)
-        points.append([w] + val_objs + val_cstrs + [solving_time])  # '+' is list concatenation
+        points.append([w] + val_objs + val_cstrs + [solving_time] + [λ])  # '+' is list concatenation
     
     if disp:
         if n_tests == 1:
@@ -323,7 +324,7 @@ def __points_to_df(points, a, b, disp):
         The resulting dataframe.
     """
 
-    df = pd.DataFrame(points, columns=['w'] + ['obj_'+str(k) for k in range(a)] + ['cstr_'+str(l) for l in range(b)] + ['time'])
+    df = pd.DataFrame(points, columns=['w'] + ['obj_'+str(k) for k in range(a)] + ['cstr_'+str(l) for l in range(b)] + ['time'] + ['λ'])
     if disp:
         with pd.option_context('display.precision', 3):
             df_disp = df.copy()
@@ -395,7 +396,7 @@ def solve_qubo_sco(objs, cstrs, λ, rand_vec=None, method=None, n_tests=1, disp=
         w, val_objs, val_cstrs = __recombine_w(w, objs, cstrs)
         t2 = time.process_time_ns()
         solving_time = (t2 - t1)/1000
-        points.append([w] + val_objs + val_cstrs + [solving_time])  # '+' is list concatenation
+        points.append([w] + val_objs + val_cstrs + [solving_time] + [λ])  # '+' is list concatenation
     
     df = __points_to_df(points, len(objs), len(cstrs), disp)
     return df
@@ -461,7 +462,8 @@ def efficient_frontier(objs, cstrs, method, **kwargs):
         A dataframe of the resulting samlpes, where each row represents a single sample.
         The columns are: the best solution from each test ('w'), objective function values
         ('obj_0', 'obj_1', ...), constraint function values ('cstr_0', 'cstr_1', ...),
-        and the respective solving time ('time') in microseconds (1 µs = 1e-6 s).
+        the respective solving time ('time') in microseconds (1 µs = 1e-6 s),
+        and the scalarization factors used ('λ').
         For the time of quantum annealing on real D-Wave hardware, the solving time
         is calculated as 'qpu_access_time' + 'post_processing_overhead_time'.
     """
