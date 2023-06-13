@@ -474,8 +474,8 @@ def efficient_frontier(objs, cstrs, method, **kwargs):
     meth = method.casefold()
     if meth in ['weighed_sum', 'weighed sum', 'weighed_sum_annealing', 'weighed sum annealing']:
 
-        k = kwargs.get('k', np.ones(num_objs))
         n_scale = kwargs.get('n_scale', 50)
+        k = kwargs.get('k', np.ones(num_objs)) / n_scale                   # pointwise division
         λs = [k * arr for arr in __weighed_sum_helper(n_scale, num_objs)]  # pointwise multiplication
         if len(λs) == 0:
             λs = [[]]
@@ -498,7 +498,7 @@ def efficient_frontier(objs, cstrs, method, **kwargs):
         for i in tqdm(range(num)):
             w = rand_vec(N)
             w, val_objs, val_cstrs = __recombine_w(w, objs, cstrs)
-            points[i] = [w] + val_objs + val_cstrs + [np.nan]  # '+' is list concatenation
+            points[i] = [w] + val_objs + val_cstrs + [np.nan] + [np.nan]  # '+' is list concatenation
         df = __points_to_df(points, num_objs, len(cstrs), disp=False)
 
     elif meth in ['eps_constraint' | 'constrained' | 'epsilon_constraint' | 'eps constraint' | 'epsilon constraint']:
