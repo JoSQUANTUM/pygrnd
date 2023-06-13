@@ -12,12 +12,9 @@ pygrnd depends on different modules:
     pip install pygrnd
 
 Pre-required:
-   
-    pip install qiskit
-    pip install numpy
-    pip install dimod
-    pip install dwave-greedy
-    pip install pennylane
+
+    requirements.txt
+    environment.yml
  
 # Tutorials and notebooks
 
