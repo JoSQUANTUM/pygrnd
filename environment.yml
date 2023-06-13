@@ -1,17 +1,22 @@
 name: pygrnd
 dependencies:
-  - numpy
-  - scipy
-  - jupyter
-  - matplotlib
-  - pylatexenc
-  - networkx
   - pip
   - pip:
-    - qiskit
+    - qiskitqiskit>=0.32.1
+    - numpy
+    - scipy
+    - jupyter
+    - matplotlib
+    - pylatexenc
+    - networkx
     - dimod
     - dwave-greedy
-    - pennylane
+    - dwave-neal
+    - pennylane>=0.27.0
     - pandas
     - tqdm
     - scikit-learn
+    - DateTime
+    - shap
+    - xgboost
+    - holidays
