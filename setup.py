@@ -44,7 +44,8 @@ setup(
                       'DateTime',
                       'shap',
                       'xgboost',
-                      'holidays'
+                      'holidays',
+                      'imblearn'
                       ],
     classifiers=[
         'Programming Language :: Python :: 3',
