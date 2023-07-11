@@ -998,7 +998,7 @@ def buildUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,m
     varcost : list of numbers
         List of costs for every conventional energy unit to produce 1 MWh.
     startcost : list of numbers
-        List of extra costs for every conventional energy unit if it is "turned on".
+        List of costs for turning on every conventional energy unit.
     minup : list of numbers
         List of "minimal up-times" for every conventional energy unit
         (whenever the i-th conventional energy unit is turned on,
