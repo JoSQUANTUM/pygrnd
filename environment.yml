@@ -20,3 +20,4 @@ dependencies:
     - shap
     - xgboost
     - holidays
+    - imblearn

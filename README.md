@@ -1,5 +1,17 @@
+![](https://github.com/JoSQUANTUM/pygrnd/actions/workflows/publish-to-pypi.yml/badge.svg)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+
 # pygrnd 
 is a library of various quantum algorithms written by the Team JoS QUANTUM GmbH to support the development of Applications for quantum computing in Finance, Insurance and Energy. The framework is a collection of open source libraries that enables building quantum models and prototypes and usage of our quantum algorithms.
+
+![](https://github.com/JoSQUANTUM/pygrnd/blob/main/notebooks/images/jos-banner7.png)
+
+## Install
+
+One command to install all dependecies:
+
+    pip install pygrnd
 
 pygrnd depends on different modules: 
 
@@ -7,14 +19,7 @@ pygrnd depends on different modules:
     Monte Carlo simulation: qiskit (qiskit.org)
     Optimization: qiskit, dimod (docs.ocean.dwavesys.com/en/stable/)
 
-## Setup
 
-    pip install pygrnd
-
-Pre-required:
-
-    requirements.txt
-    environment.yml
  
 # Tutorials and notebooks
 
