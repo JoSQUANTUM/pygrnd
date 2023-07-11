@@ -243,14 +243,6 @@ def solve_qubo(objs, cstrs, λ, P, m, annealingSamples=1, annealingTime=20, n_te
         If None: use D-Wave's simulated annealing algorithm.
     DWregion : str, optional
         Choose to use D-Wave's compute resources in a particular region. Default is "eu-central-1".
-    
-    
-    Returns
-    -------
-    mat_objs : list of numpy matrices
-        list of matrices coding the objective functions.
-    mat_cstrs : list of numpy matrices
-        list of matrices coding the constraints.
 
     Examples for `objs` and `cstrs`
     -------------------------------
