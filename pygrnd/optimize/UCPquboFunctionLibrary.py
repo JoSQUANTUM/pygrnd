@@ -975,8 +975,49 @@ def buildUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,m
     Build the QUBO for the unit commitment problem as outlined in the following paper:
     M.C. Braun, T. Decker, N. Hegemann, S.F. Kerstan, F. Lorenz, "Towards optimization under uncertainty for fundamental models in energy markets using quantum computers", arXiv:2301.01108
     
-    Input:
-    List of power unit parameters, precision, time steps, demand, costs, min up/down min/max supply parameters
+    Parameters
+    ----------
+    autoset : bool
+        Whether the penalty factor should be set automatically or not.
+    n : int
+        Number of conventional power units (non-renewables).
+    pres : int
+        Resolution (number of bits) for discretizing the power supply range of units.
+    T : int
+        Number of time steps.
+    d : list of numbers
+        List of effective demands for every time step (= actual demands minus renewables).
+    dgen : list of lists of floats
+        Helper vector in the following format:
+        The i-th sublist is for the i-th conventional power unit.
+        The r-th element in the i-th sublist corresponds to `[(ppart * 2**r) * (maxgen[i]-mingen[i])`,
+        where `ppart` is `1 / ((2**(pres) - 1))`.
+    Clist : list of numpy vectors
+        (Not used) auxiliary variable for cost of unit i per timestep.
+        `Clist = [np.array(dgen[i])*varcost[i] for i in range(n)]`
+    varcost : list of numbers
+        List of costs for every conventional energy unit to produce 1 MWh.
+    startcost : list of numbers
+        List of extra costs for every conventional energy unit if it is "turned on".
+    minup : list of numbers
+        List of "minimal up-times" for every conventional energy unit
+        (whenever the i-th conventional energy unit is turned on,
+        it must remain "turned on" for at least `minup[i]` time steps).
+    mindown : list of numbers
+        List of "minimal down-times" for every conventional energy unit
+        (whenever the i-th conventional energy unit is turned off,
+        it must remain "turned off" for at least `minfown[i]` time steps).
+    mingen : list of numbers
+        List of minimal amount of power generation (in MWh) in each time step
+        for every conventional energy unit.
+    maxgen : list of numbers
+        List of maximal amount of power generation (in MWh) in each time step
+        for every conventional energy unit.
+    
+    Returns
+    ----------
+    Q : numpy matrix
+    Qcost : numpy matrix
     """
 
     print("Start building UCP QUBO")
