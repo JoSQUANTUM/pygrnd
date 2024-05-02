@@ -271,8 +271,9 @@ def evaluateQuantum(timesteps, nodes, probFail, probRecovery, edges):
     """
     qc,qr,cr=createCircuit(timesteps, nodes, probFail, probRecovery, edges)
     backend_qiskit = Aer.get_backend(name='statevector_simulator')
-    job = execute(qc, backend_qiskit)
-    v = np.asarray(job.result().get_statevector())
+    #job = execute(qc, backend_qiskit)
+    #v = np.asarray(job.result().get_statevector())
+    v = Statevector(qc)
 
     res={}
     for c in allCombinations(len(nodes)):

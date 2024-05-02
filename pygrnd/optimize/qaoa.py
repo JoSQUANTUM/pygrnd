@@ -1,12 +1,11 @@
 from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister
-from qiskit import execute
-from qiskit import Aer
-from qiskit import IBMQ
+from qiskit.providers.basic_provider import BasicProvider
+from qiskit import transpile
 from qiskit.visualization import plot_histogram
-from math import pi
 
-
+import itertools
 import math
+from math import pi
 import cmath
 import random
 import numpy as np
@@ -15,6 +14,7 @@ from scipy.optimize import minimize
 
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+
 
 def num2bin(x,r):
     res=""
@@ -66,17 +66,15 @@ def maxString(counts):
     maxi=np.argmax(probList)
     return stringList[maxi]
 
-
+# Return objective to x^t Q x value
 def eval_solution(x,m):
-
     obj=np.matmul(np.matmul(x,m),np.transpose(x))
-
     return obj
 
-import itertools
 
+
+# Brute force QUBO solver
 def bruteForceSolver(m):
-
     menge=[p for p in itertools.product([0,1], repeat=len(m))]
     #bestCost=-math.inf # maximize
     bestCost=math.inf # minimize
@@ -92,9 +90,7 @@ def bruteForceSolver(m):
     return bestVector,bestCost
 
 
-
-
-
+# Convert matrix
 def matrixConvertInv(m):
     buffer=np.zeros((len(m),len(m)))
     for i in range(len(m)):
@@ -125,7 +121,8 @@ def addGates(qr,qc,m1, gamma):
 
 ## Single layer QAOA
 
-def qaoaExp(m0,beta,gamma,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def qaoaExp(m0,beta,gamma,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
+    
     m=matrixConvertInv(m0)
     
     qr=QuantumRegister(len(m),'q')
@@ -139,7 +136,13 @@ def qaoaExp(m0,beta,gamma,Nshots,backend = Aer.get_backend('qasm_simulator')):
     qc.measure(qr,cr)
 
     #backend=Aer.get_backend("qasm_simulator")
-    job = execute(qc, backend,shots=Nshots)
+    #job = execute(qc, backend,shots=Nshots)
+    #counts=job.result().get_counts()
+
+    #backend = BasicProvider().get_backend("basic_simulator")
+    
+    qcNew=transpile(qc, backend)
+    job=backend.run(qcNew,shots=Nshots)
     counts=job.result().get_counts()
 
     # pull result with highest count
@@ -173,7 +176,7 @@ def qaoaExp(m0,beta,gamma,Nshots,backend = Aer.get_backend('qasm_simulator')):
 
 # calculate expectation value through multi layer qaoa
 
-def multiLayerqaoaExp(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def multiLayerqaoaExp(m,betas,gammas,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
     
     mPauli=matrixConvertInv(m)
     
@@ -197,7 +200,11 @@ def multiLayerqaoaExp(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simu
     qc.measure(qr,cr)
 
     #backend=Aer.get_backend("qasm_simulator")
-    job = execute(qc, backend,shots=Nshots)
+    #job = execute(qc, backend,shots=Nshots)
+    #counts=job.result().get_counts()
+
+    qcNew=transpile(qc, backend)
+    job=backend.run(qcNew,shots=Nshots)
     counts=job.result().get_counts()
 
     # pull result with highest count
@@ -224,7 +231,7 @@ def multiLayerqaoaExp(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simu
 
 # calculate expectation value through multi layer qaoa
 
-def multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def multiLayerqaoa(m,betas,gammas,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
     
     mPauli=matrixConvertInv(m)
     
@@ -248,7 +255,11 @@ def multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulat
     qc.measure(qr,cr)
 
     #backend=Aer.get_backend("qasm_simulator")
-    job = execute(qc, backend,shots=Nshots)
+    #job = execute(qc, backend,shots=Nshots)
+    #counts=job.result().get_counts()
+
+    qcNew=transpile(qc, backend)
+    job=backend.run(qcNew,shots=Nshots)
     counts=job.result().get_counts()
 
     # pull result with highest count
@@ -278,7 +289,7 @@ def multiLayerqaoa(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulat
 ## Random init of beta, gamma
 ## returns circuit, parameters and found results
     
-def QAOAoptimizeMaxCount(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def QAOAoptimizeMaxCount(m,layer,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
 
     def QAOAobjectiveFunction(x):
         size=len(x)
@@ -358,7 +369,7 @@ def qaoaLandscape(m,n,Nshots):
 
 ## method by approximating the expectation value with the overall average of counts evaluated with the cost function
 
-def multiLayerqaoaExpectation(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def multiLayerqaoaExpectation(m,betas,gammas,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
     
     mPauli=matrixConvertInv(m)
     
@@ -382,7 +393,11 @@ def multiLayerqaoaExpectation(m,betas,gammas,Nshots,backend = Aer.get_backend('q
     qc.measure(qr,cr)
 
     #backend=Aer.get_backend("qasm_simulator")
-    job = execute(qc, backend,shots=Nshots)
+    #job = execute(qc, backend,shots=Nshots)
+    #counts=job.result().get_counts()
+
+    qcNew=transpile(qc, backend)
+    job=backend.run(qcNew,shots=Nshots)
     counts=job.result().get_counts()
 
     avg = 0
@@ -409,7 +424,7 @@ def multiLayerqaoaExpectation(m,betas,gammas,Nshots,backend = Aer.get_backend('q
 
 # calculate expectation value through multi layer qaoa
 
-def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = Aer.get_backend('qasm_simulator')):
+def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = BasicProvider().get_backend("basic_simulator")):
     
     mPauli=matrixConvertInv(m)
     
@@ -433,9 +448,12 @@ def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = Aer.get_backend('
     qc.measure(qr,cr)
 
     #backend=Aer.get_backend("qasm_simulator")
-    job = execute(qc, backend,shots=Nshots)
-    counts=job.result().get_counts()
+    #job = execute(qc, backend,shots=Nshots)
+    #counts=job.result().get_counts()
 
+    qcNew=transpile(qc, backend)
+    job=backend.run(qcNew,shots=Nshots)
+    counts=job.result().get_counts()
     
     avg = 0
     sum_count = 0
@@ -487,7 +505,7 @@ def multiLayerqaoaExpectation1(m,betas,gammas,Nshots,backend = Aer.get_backend('
 ## optional backend: can be executed on simulator (default) or real harware
 ## optonal optimizer: "Nelder-Mead" (default), "COBYLA", "SLSQP"
     
-def QAOAoptimizeExpectation(m,layer,Nshots,backend = Aer.get_backend('qasm_simulator'),method="Nelder-Mead"):
+def QAOAoptimizeExpectation(m,layer,Nshots,backend = BasicProvider().get_backend("basic_simulator"),method="Nelder-Mead"):
 
     def QAOAobjectiveFunctionExpectation(x):
         size=len(x)

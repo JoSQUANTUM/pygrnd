@@ -15,7 +15,6 @@ limitations under the License.'''
 import math
 import numpy as np
 import qiskit
-from qiskit import Aer, execute
 import random
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit.library.standard_gates import U3Gate, XGate, ZGate
@@ -23,6 +22,8 @@ from pygrnd.qc.helper import allCombinations, addValue, addPower2, subtractValue
 from pygrnd.qc.parallelQAE import getBitStringsForClosestBin
 from qiskit.extensions import UnitaryGate
 from qiskit.circuit.library import QFT
+from qiskit.providers.basic_provider import BasicProvider
+from qiskit import transpile
 
 def brm(nodes, edges, probsNodes, probsEdges, model2gate=False):
     """input:

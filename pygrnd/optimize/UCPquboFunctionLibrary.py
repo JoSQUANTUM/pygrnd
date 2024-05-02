@@ -1154,6 +1154,51 @@ def buildSUCPqubo(autoset,n,pres,T,d,dgen,Clist,varcost,startcost,minup,mindown,
     List of power unit parameters, precision, time steps, demand, costs, min up/down min/max supply parameters, list of demand and supply including probabilities from renewables
     """
 
+    print("Preparation")
+
+    #initializing variables & setting variables with parameters / units
+    T=len(demand)                          # number of time steps
+    n = len(minup)                         # number of conventional power units
+    ppart = 1 / ((2**(pres) - 1))          # step size of logarithmic resolution
+
+    dgen0=[maxgen[i]-mingen[i] for i in range(len(mingen))]                     #power supply range of individual units
+    Clist = [dgen0[i]*varcost[i] for i in range(n)]                              #defining auxiliary variable for cost of unit i per timestep
+    dgen=[[ppart*dgen0[i]* 2**r for r in range(pres)] for i in range(n)]         #preparing power stage resolved "dgen"-vector
+
+    d=[]                                                                         #computing effective demans
+    for k in range(len(demand)):
+        if len(suppren)!=0:
+            if len(suppren)!=len(demand):
+                print('Mismatch of timesteps in demand and suppren')
+            d.append(demand[k] - np.sum(suppren[k]))
+        else:
+            d.append(demand[k])
+
+    #calculating expectation values
+    expD=[ sum(pdD[t][l]*probsD[t][l] for l in range(len(pdD[t]))) for t in range(T)]
+    if graphicsout==True:
+        print('expectation value of demand: ', expD)
+    expRE=[ sum(sum(pdRE[t][j][s]*probsRE[t][j][s] for s in range(len(pdRE[t][j]))) for j in range(len(pdRE[t]))) for t in range(T)]
+    if graphicsout==True:
+        print('expectation values of renewable supply: ', expRE)
+
+    from math import prod
+    comb=[list(itertools.product(*pdRE[i])) for i in range(len(pdRE))]
+    allcombinds_pdRE=[[[pdRE[l][list(np.array(m)).index(k)].index(k) for k in m] for m in comb[l]]for l in range(len(comb))]
+    allcombs_pdRE=[[[pdRE[l][m][allcombinds_pdRE[l][j][m]] for m in range(len(allcombinds_pdRE[l][j]))] for j in range(len(allcombinds_pdRE[l]))] for l in range(len(allcombinds_pdRE))]
+    expd=[sum(np.prod([probsRE[t][allcombinds_pdRE[t][m].index(allcombinds_pdRE[t][m][n])][allcombinds_pdRE[t][m][n]] for n in range(len(allcombs_pdRE[t][m]))])*probsD[t][r]*(pdD[t][r]-(sum(allcombs_pdRE[t][m][n] for n in range(len(allcombs_pdRE[t][m]))))) for m in range(len(allcombs_pdRE[t])) for r in range(len(pdD[t]))) for t in range(T)]
+    if graphicsout==True:
+        print('expected eff. demand: ', expd)
+
+    if A==0 and B==0 and C==0 and C2==0 and D==0 and E==0 and F==0 and G==0 and H==0:                                                                 # set penalty strengths before passing to buildQUBO
+        autoset=[1,0,0,0,0,0,0,0,0,0]
+    else:
+        autoset=[0,A,B,C,C2,D,E,F,G,H]
+
+
+
+
+
     print("Start building relaxed UCP QUBO")
 
     qubostart = time.process_time()

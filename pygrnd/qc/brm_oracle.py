@@ -18,7 +18,8 @@ import qiskit
 import networkx as nx
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.library.standard_gates import ZGate
-
+from qiskit.providers.basic_provider import BasicProvider
+from qiskit import transpile
 
 
 def brmoracle(name,PDFgenerator,pdfqubits,pdfancillas,LISTOFcontrolstrings):

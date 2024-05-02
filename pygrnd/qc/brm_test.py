@@ -14,13 +14,14 @@ limitations under the License.'''
 
 import random
 import pygrnd
-from qiskit import execute
-from qiskit import Aer
 from qiskit.quantum_info import hellinger_fidelity
 from pygrnd.qc.helper import *
 from pygrnd.qc.brm import *
 from pygrnd.qc.brm_oracle import *
 from pygrnd.qc.QAE import *
+from qiskit.providers.basic_provider import BasicProvider
+from qiskit import transpile
+
 
 def calculateDiffProbabilities(probsClassical, probsStatevector):
     '''Given are two dictionaries of probabilities. Calculate the difference
