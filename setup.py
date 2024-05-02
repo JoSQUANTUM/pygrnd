@@ -19,7 +19,7 @@ with open('README.md') as f:
 
 setup(
     name='pygrnd',
-    version='0.1.6',
+    version='0.1.7',
     description='A python library for quantum algorithms and software',
     long_description_content_type="text/markdown",
     long_description=long_description,
@@ -30,12 +30,12 @@ setup(
     zip_safe=False,
     include_package_data=True,
     packages= find_packages(),
-    install_requires=['qiskit>=0.32.1',
+    install_requires=['qiskit',
                       'numpy',
                       'dimod',
                       'dwave-greedy',
                       'dwave-neal',
-                      'pennylane>=0.27.0',
+                      'pennylane',
                       'pandas',
                       'seaborn',
                       'tqdm',

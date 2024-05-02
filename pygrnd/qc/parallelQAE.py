@@ -21,9 +21,14 @@ limitations under the License.'''
 import math, cmath, random
 import numpy as np
 from math import pi
-from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, execute, Aer
+
+from qiskit import QuantumCircuit, ClassicalRegister, QuantumRegister, transpile
 from qiskit.circuit.library import QFT, HGate, XGate, UGate, SGate, ZGate, IGate
 from qiskit.circuit.random import random_circuit
+from qiskit.quantum_info import Statevector, Operator
+from qiskit.providers.basic_provider import BasicProvider
+
+
 import itertools
 from pygrnd.qc.helper import *
 #
@@ -156,9 +161,12 @@ def verifyGroverOperator(model, targets):
     qc=QuantumCircuit(qr)
     qc.append(model,qr)
 
-    backend = Aer.get_backend('statevector_simulator')
-    job = execute(qc, backend)
-    v=np.asarray(job.result().get_statevector())
+    #backend = Aer.get_backend('statevector_simulator')
+    #job = execute(qc, backend)
+    #v=np.asarray(job.result().get_statevector())
+    v = Statevector(qc)
+    
+    
     sumProbs=0
     for i in range(len(v)):
         if num2bin(i,numberQubits) in targets:
@@ -171,9 +179,13 @@ def verifyGroverOperator(model, targets):
     qc=QuantumCircuit(qr)
     qc.append(constructGroverOperator(model, targets),qr)
 
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    u=job.result().get_unitary()
+    #backend = Aer.get_backend('unitary_simulator')
+    #job = execute(qc, backend)
+    #u=job.result().get_unitary()
+
+    #backend = UnitarySimulator(precision='single')
+    u = Operator(qc).data
+
     ev,ev2=np.linalg.eig(u)
     for x in ev:
         angle=np.angle(x)
@@ -230,9 +242,12 @@ def getGoodEigenvaluesGroverOperator(modelGate, goodStates):
     qc=QuantumCircuit(qr)
     qc.append(constructGroverOperator(modelGate, goodStates),qr)
 
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    u=job.result().get_unitary()
+    #backend = Aer.get_backend('unitary_simulator')
+    #job = execute(qc, backend)
+    #u=job.result().get_unitary()
+
+    u = Operator(qc).data
+
     return getGoodEigenvaluesUnitary(u)
 
 #
@@ -245,9 +260,14 @@ def getEmbeddedVector(v):
     qr=QuantumRegister(numberQubits+1,'q')
     qc=QuantumCircuit(qr)
     qc.initialize(v,qr[1:])
-    backend = Aer.get_backend('statevector_simulator')
-    job = execute(qc, backend)
-    return np.asarray(job.result().get_statevector())
+    
+    #backend = Aer.get_backend('statevector_simulator')
+    #job = execute(qc, backend)
+    v = Statevector(qc)
+
+    
+    
+    return v
 
 def getAllEmbeddedVectors(modelGate, goodStates):
     eigenvectors=getGoodEigenvaluesGroverOperator(modelGate,goodStates)
@@ -508,11 +528,16 @@ def findSuitableModel(qubits, minProb, maxProb, numberStates):
         qc=QuantumCircuit(qr,cr)
         qc.append(modelGate,qr)
         qc.measure(qr,cr)
-        backend = Aer.get_backend('qasm_simulator')
+        
+        #backend = Aer.get_backend('qasm_simulator')
+        #job = execute(qc, backend, shots=numberShots)
+        #result=job.result()
+        #counts=result.get_counts()
+        backend = BasicProvider().get_backend("basic_simulator")
+        qcNew=transpile(qc, backend)
+        job=backend.run(qcNew,shots=numberShots)
+        counts=job.result().get_counts()
 
-        job = execute(qc, backend, shots=numberShots)
-        result=job.result()
-        counts=result.get_counts()
         
         # Check all subsets of size numberStates of possible combinations of results
         # if we land in the desired region. Each relevant state should have at least 1
