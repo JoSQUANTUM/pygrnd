@@ -13,9 +13,12 @@ See the License for the specific language governing permissions and
 limitations under the License.'''
 
 import json
-from qiskit import QuantumCircuit, QuantumRegister, execute
+from qiskit import QuantumCircuit, QuantumRegister#, execute
 from qiskit.circuit.library import RGate,U3Gate,GMS,QFT,XGate,RXXGate,ZGate,PhaseGate,SwapGate,CXGate,RXGate,RYGate,RZGate, SXGate, SXdgGate, CPhaseGate, HGate,CCXGate
-from qiskit import Aer
+from qiskit.quantum_info import Statevector, Operator
+from qiskit.providers.basic_provider import BasicProvider
+
+#from qiskit import Aer
 import qiskit
 import math
 from scipy.linalg import pinv
@@ -470,13 +473,15 @@ def reduceCircuitByPattern(qc, consideredQubits, allPatterns, costPattern):
     qc2=applyReducerPattern(qc,bestReduction[0],bestReduction[1])
 
     # Check the reduction.
-    backend = Aer.get_backend('unitary_simulator')
-    job = execute(qc, backend)
-    u=job.result().get_unitary()
+    #backend = Aer.get_backend('unitary_simulator')
+    #job = execute(qc, backend)
+    #u=job.result().get_unitary()
+    u = Operator(qc).data
 
-    backend = Aer.get_backend('unitary_simulator')
-    job2 = execute(qc2, backend)
-    u2=job2.result().get_unitary()
+    #backend = Aer.get_backend('unitary_simulator')
+    #job2 = execute(qc2, backend)
+    #u2=job2.result().get_unitary()
+    u2 = Operator(qc).data
 
     uDiff=u-u2
     isGood=True

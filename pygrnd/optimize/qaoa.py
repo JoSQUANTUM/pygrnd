@@ -67,7 +67,7 @@ def maxString(counts):
     return stringList[maxi]
 
 # Return objective to x^t Q x value
-def eval_solution(x,m):
+def eval_solution(x, m):
     obj=np.matmul(np.matmul(x,m),np.transpose(x))
     return obj
 

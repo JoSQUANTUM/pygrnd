@@ -14,10 +14,13 @@ limitations under the License.'''
 
 import itertools
 from qiskit import QuantumRegister, QuantumCircuit
+from qiskit.quantum_info import Statevector, Operator
+from qiskit.providers.basic_provider import BasicProvider
 from qiskit.circuit.library import RGate,U3Gate,GMS,QFT,XGate,RXXGate,ZGate,PhaseGate,SwapGate,CXGate,RXGate,RYGate,RZGate, SXGate, SXdgGate, CPhaseGate, HGate,CCXGate
-from qiskit import Aer
-from qiskit import execute
-
+#from qiskit import Aer
+#from qiskit import execute
+from qiskit.quantum_info import Statevector, Operator
+from qiskit.providers.basic_provider import BasicProvider
 
 def decodeParameter(code):
     phaseA=0.1
@@ -139,9 +142,11 @@ def getIdentities(totalQubits, numberGates, prefixPattern, gates, params, qubits
         qc=QuantumCircuit(qr)
         insertPatternGates(qc,qr,list(range(totalQubits)),a)
 
-        backend = Aer.get_backend('unitary_simulator')
-        job = execute(qc, backend)
-        u=job.result().get_unitary()
+        #backend = Aer.get_backend('unitary_simulator')
+        #job = execute(qc, backend)
+        #u=job.result().get_unitary()
+        u = Operator(qc).data
+
         isId=True
         for i in range(len(u)):
             for j in range(len(u)):
