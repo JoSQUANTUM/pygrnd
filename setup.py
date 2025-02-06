@@ -19,7 +19,7 @@ with open('README.md') as f:
 
 setup(
     name='pygrnd',
-    version='0.1.7',
+    version='0.1.8',
     description='A python library for quantum algorithms and software',
     long_description_content_type="text/markdown",
     long_description=long_description,
